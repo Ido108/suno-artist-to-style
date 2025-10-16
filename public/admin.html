@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suno Artist Manager - ניהול אמנים</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .search-bar {
+            margin-bottom: 20px;
+        }
+
+        .artists-list {
+            padding: 30px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .artist-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .artist-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .artist-name {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .artist-style {
+            color: #718096;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .artist-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .api-settings {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .api-settings h3 {
+            color: #856404;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+            font-family: inherit;
+            background: white;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .form-check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .form-check label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 400;
+        }
+
+        .form-note {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Suno Artist Manager</h1>
+            <p>ניהול מאגר אמנים וסטיילים למוזיקה</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalArtists">0</div>
+                <div class="stat-label">סה״כ אמנים</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="enabledStatus">-</div>
+                <div class="stat-label">סטטוס</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div id="alertContainer"></div>
+
+            <div class="toggle-container">
+                <label>
+                    <strong>הפעל/כבה את המערכת:</strong>
+                </label>
+                <label class="switch">
+                    <input type="checkbox" id="enableToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="api-settings">
+                <h3>🤖 הגדרות AI Generator</h3>
+
+                <div class="form-group">
+                    <label for="llmProvider">מודל AI:</label>
+                    <select id="llmProvider">
+                        <option value="gemini-2.5-flash">Google - Gemini 2.5 Flash</option>
+                        <option value="gemini-2.0-flash" selected>Google - Gemini 2.0 Flash (מומלץ)</option>
+                        <option value="gemini-1.5-pro">Google - Gemini 1.5 Pro</option>
+                        <option value="gemini-2.5-pro-preview-05-06">Google - Gemini 2.5 Pro Preview</option>
+                        <option value="claude-sonnet-4-5-20250929">Anthropic - Claude 4.5 Sonnet (החדש ביותר)</option>
+                        <option value="claude-sonnet-4-20250514">Anthropic - Claude 4 Sonnet</option>
+                        <option value="claude-3-7-sonnet-20250219">Anthropic - Claude 3.7 Sonnet</option>
+                        <option value="claude-3-5-sonnet-latest">Anthropic - Claude 3.5 Sonnet</option>
+                        <option value="claude-3-5-haiku-latest">Anthropic - Claude 3.5 Haiku</option>
+                        <option value="claude-3-haiku-20240307">Anthropic - Claude 3 Haiku</option>
+                        <option value="gpt-5-chat-latest">OpenAI - GPT-5 Chat Latest</option>
+                        <option value="gpt-4.1-2025-04-14">OpenAI - GPT-4.1</option>
+                        <option value="gpt-4.1-mini">OpenAI - GPT-4.1-mini</option>
+                        <option value="gpt-4o">OpenAI - GPT-4o</option>
+                        <option value="o4-mini">OpenAI - o4-Mini</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="apiKey">API Key:</label>
+                    <input type="password" id="apiKey" placeholder="הדבק את ה-API key שלך כאן" required>
+                    <p class="form-note" id="apiKeyNote">הזן את ה-API key שלך למודל שבחרת.</p>
+                    <div class="form-check">
+                        <input type="checkbox" id="saveApiKey" checked>
+                        <label for="saveApiKey">שמור API key בדפדפן (רק במכשיר הזה)</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">סיסמת ניהול:</label>
+                <input type="password" id="password" placeholder="הזן סיסמה">
+            </div>
+
+            <div class="form-group">
+                <label for="artistName">שם האמן:</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="artistName" placeholder="לדוגמה: Billy Joel" style="flex: 1;">
+                    <button class="btn btn-ai" onclick="generateStyle()" id="generateBtn" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; white-space: nowrap;">
+                        🤖 AI Generator
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="artistStyle">תיאור הסטייל (מפורט):</label>
+                <textarea id="artistStyle" placeholder="לדוגמה: Pop, Rock, Storytelling, piano-driven, male vocals, upbeat"></textarea>
+            </div>
+
+            <div>
+                <button class="btn btn-primary" onclick="saveArtist()">💾 שמור/עדכן אמן</button>
+                <button class="btn btn-success" onclick="loadArtists()">🔄 רענן רשימה</button>
+            </div>
+        </div>
+
+        <div class="artists-list">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="🔍 חפש אמן..." onkeyup="filterArtists()">
+            </div>
+            <div id="artistsList"></div>
+        </div>
+    </div>
+
+    <script>
+        let artistsData = { enabled: true, artists: {} };
+        const API_URL = window.location.origin;
+        let serverEnvKeys = {};
+
+        // Helper function to get provider name from model ID
+        function getProviderName(modelId) {
+            if (!modelId) return 'unknown';
+            if (modelId.startsWith('gemini')) { return 'google'; }
+            else if (modelId.startsWith('claude')) { return 'anthropic'; }
+            else if (modelId.startsWith('gpt') || modelId.startsWith('o')) { return 'openai'; }
+            return 'unknown';
+        }
+
+        // API Key management (localStorage)
+        function saveApiKeyToLocalStorage(modelId, apiKey) {
+            const providerName = getProviderName(modelId);
+            if (providerName !== 'unknown') {
+                localStorage.setItem(`apiKey_${providerName}`, apiKey);
+                console.log(`Saved API key for provider: ${providerName}`);
+            } else {
+                console.warn(`Could not determine provider for model: ${modelId}. Key not saved.`);
+            }
+        }
+
+        function loadApiKeyFromLocalStorage(modelId) {
+            const providerName = getProviderName(modelId);
+            if (providerName !== 'unknown') {
+                return localStorage.getItem(`apiKey_${providerName}`);
+            }
+            return null;
+        }
+
+        function isApiKeyAvailable(modelId) {
+            const localKey = loadApiKeyFromLocalStorage(modelId);
+            return !!localKey;
+        }
+
+        function updateApiInputState() {
+            const modelId = document.getElementById('llmProvider').value;
+            const apiKeyInput = document.getElementById('apiKey');
+            const apiKeyNote = document.getElementById('apiKeyNote');
+            const providerName = getProviderName(modelId);
+
+            const localKey = loadApiKeyFromLocalStorage(modelId);
+
+            // Update note based on provider
+            let noteText = `הזן API key עבור ${providerName}.`;
+            let links = {
+                'google': 'https://aistudio.google.com/apikey',
+                'anthropic': 'https://console.anthropic.com/',
+                'openai': 'https://platform.openai.com/api-keys'
+            };
+
+            if (links[providerName]) {
+                noteText += ` <a href="${links[providerName]}" target="_blank" style="color: #667eea;">קבל מפתח כאן</a>`;
+            }
+
+            apiKeyNote.innerHTML = noteText;
+
+            // Load saved key if exists
+            if (localKey) {
+                apiKeyInput.value = localKey;
+                document.getElementById('saveApiKey').checked = true;
+            } else {
+                apiKeyInput.value = '';
+                document.getElementById('saveApiKey').checked = false;
+            }
+        }
+
+        async function initializeApiSettings() {
+            // Load saved API key for current model
+            updateApiInputState();
+        }
+
+        // Load artists on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadArtists();
+            initializeApiSettings();
+
+            // Event listeners for API settings
+            document.getElementById('llmProvider').addEventListener('change', function() {
+                const modelId = this.value;
+                const savedKey = loadApiKeyFromLocalStorage(modelId);
+                const apiKeyInput = document.getElementById('apiKey');
+                const saveApiKeyCheckbox = document.getElementById('saveApiKey');
+
+                apiKeyInput.value = savedKey || '';
+                saveApiKeyCheckbox.checked = !!savedKey;
+                updateApiInputState();
+            });
+
+            document.getElementById('apiKey').addEventListener('input', updateApiInputState);
+
+            document.getElementById('saveApiKey').addEventListener('change', function() {
+                const modelId = document.getElementById('llmProvider').value;
+                const key = document.getElementById('apiKey').value.trim();
+
+                if (this.checked && key) {
+                    saveApiKeyToLocalStorage(modelId, key);
+                }
+
+                updateApiInputState();
+            });
+        });
+
+        async function loadArtists() {
+            try {
+                const response = await fetch(`${API_URL}/api/artists`);
+                artistsData = await response.json();
+
+                updateStats();
+                displayArtists();
+                updateToggle();
+            } catch (error) {
+                showAlert('שגיאה בטעינת האמנים', 'error');
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('totalArtists').textContent = Object.keys(artistsData.artists).length;
+            document.getElementById('enabledStatus').textContent = artistsData.enabled ? '✅ פעיל' : '❌ כבוי';
+        }
+
+        function updateToggle() {
+            document.getElementById('enableToggle').checked = artistsData.enabled;
+        }
+
+        function displayArtists() {
+            const artistsList = document.getElementById('artistsList');
+            const artists = Object.entries(artistsData.artists).sort((a, b) => a[0].localeCompare(b[0]));
+
+            if (artists.length === 0) {
+                artistsList.innerHTML = '<p style="text-align: center; color: #6c757d;">אין אמנים במאגר</p>';
+                return;
+            }
+
+            artistsList.innerHTML = artists.map(([name, style]) => `
+                <div class="artist-card" data-name="${name}">
+                    <div class="artist-name">${name}</div>
+                    <div class="artist-style">${style}</div>
+                    <div class="artist-actions">
+                        <button class="btn btn-primary" onclick="editArtist('${escapeHtml(name)}', '${escapeHtml(style)}')">✏️ ערוך</button>
+                        <button class="btn btn-danger" onclick="deleteArtist('${escapeHtml(name)}')">🗑️ מחק</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterArtists() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.artist-card');
+
+            cards.forEach(card => {
+                const name = card.dataset.name.toLowerCase();
+                if (name.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        async function saveArtist() {
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('artistName').value.trim();
+            const style = document.getElementById('artistStyle').value.trim();
+
+            if (!password) {
+                showAlert('נא להזין סיסמה', 'error');
+                return;
+            }
+
+            if (!name || !style) {
+                showAlert('נא למלא את שם האמן והסטייל', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/artists`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, style, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('האמן נשמר בהצלחה!', 'success');
+                    document.getElementById('artistName').value = '';
+                    document.getElementById('artistStyle').value = '';
+                    loadArtists();
+                } else {
+                    showAlert(data.error || 'שגיאה בשמירה', 'error');
+                }
+            } catch (error) {
+                showAlert('שגיאת רשת', 'error');
+            }
+        }
+
+        async function deleteArtist(name) {
+            const password = document.getElementById('password').value;
+
+            if (!password) {
+                showAlert('נא להזין סיסמה', 'error');
+                return;
+            }
+
+            if (!confirm(`האם אתה בטוח שברצונך למחוק את ${name}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/artists/${encodeURIComponent(name)}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('האמן נמחק בהצלחה', 'success');
+                    loadArtists();
+                } else {
+                    showAlert(data.error || 'שגיאה במחיקה', 'error');
+                }
+            } catch (error) {
+                showAlert('שגיאת רשת', 'error');
+            }
+        }
+
+        function editArtist(name, style) {
+            document.getElementById('artistName').value = name;
+            document.getElementById('artistStyle').value = style;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        document.getElementById('enableToggle').addEventListener('change', async function() {
+            const password = document.getElementById('password').value;
+
+            if (!password) {
+                showAlert('נא להזין סיסמה', 'error');
+                this.checked = !this.checked;
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/toggle`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    artistsData.enabled = data.enabled;
+                    updateStats();
+                    showAlert(`המערכת ${data.enabled ? 'הופעלה' : 'כובתה'} בהצלחה`, 'success');
+                } else {
+                    showAlert(data.error || 'שגיאה', 'error');
+                    this.checked = !this.checked;
+                }
+            } catch (error) {
+                showAlert('שגיאת רשת', 'error');
+                this.checked = !this.checked;
+            }
+        });
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'error' ? 'alert-error' : 'alert-success';
+
+            alertContainer.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/'/g, "\\'");
+        }
+
+        // AI Style Generator
+        async function generateStyle() {
+            const password = document.getElementById('password').value;
+            const artistName = document.getElementById('artistName').value.trim();
+            const llmProvider = document.getElementById('llmProvider').value;
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const saveApiKey = document.getElementById('saveApiKey').checked;
+            const generateBtn = document.getElementById('generateBtn');
+            const originalText = generateBtn.innerHTML;
+
+            if (!password) {
+                showAlert('נא להזין סיסמה תחילה', 'error');
+                return;
+            }
+
+            if (!artistName) {
+                showAlert('נא להזין שם אמן תחילה', 'error');
+                return;
+            }
+
+            // Save API key if checkbox is checked
+            if (apiKey && saveApiKey) {
+                saveApiKeyToLocalStorage(llmProvider, apiKey);
+            }
+
+            // Check if API key is available
+            if (!apiKey) {
+                showAlert(`דרוש API key. הזן במקטע "הגדרות AI Generator".`, 'error');
+                return;
+            }
+
+            // Show loading state
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '⏳ מייצר...';
+
+            try {
+                const response = await fetch(`${API_URL}/api/generate-style`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        artistName,
+                        password,
+                        llmProvider,
+                        apiKey: apiKey || undefined
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Fill the style textarea with generated content
+                    document.getElementById('artistStyle').value = data.generatedStyle;
+
+                    const providerDisplay = data.provider || llmProvider;
+                    showAlert(`✨ סטייל נוצר בהצלחה עבור ${artistName}! (${providerDisplay})`, 'success');
+
+                    // Success animation
+                    generateBtn.innerHTML = '✅ נוצר!';
+                    generateBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+
+                    setTimeout(() => {
+                        generateBtn.innerHTML = originalText;
+                        generateBtn.style.background = '';
+                        generateBtn.disabled = false;
+                    }, 2000);
+                } else {
+                    showAlert(data.error || 'שגיאה ביצירת סטייל', 'error');
+                    generateBtn.innerHTML = originalText;
+                    generateBtn.disabled = false;
+                }
+            } catch (error) {
+                showAlert('שגיאת רשת: ' + error.message, 'error');
+                generateBtn.innerHTML = originalText;
+                generateBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

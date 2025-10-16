@@ -1,0 +1,32 @@
+{
+  "name": "suno-artist-extension",
+  "version": "2.0.0",
+  "description": "Suno Artist Style Replacement Extension with Admin Panel and AI Generator",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js",
+    "test": "node scripts/test-api.js",
+    "backup": "node scripts/backup-artists.js"
+  },
+  "keywords": ["suno", "music", "extension", "artist", "ai"],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/suno-extension.git"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.3.1",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
