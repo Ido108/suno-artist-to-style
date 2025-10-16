@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Suno Artist Style Replacer
 // @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  מחליף אוטומטית שמות אמנים בתיאור מפורט של הסטייל שלהם ב-Suno
+// @version      2.0
+// @description  מוסיף כפתור להחלפת שמות אמנים בתיאור מפורט של הסטייל שלהם ב-Suno
 // @author       You
 // @match        https://suno.com/*
 // @match        https://app.suno.ai/*
@@ -18,14 +18,12 @@
     'use strict';
 
     const CONFIG = {
-        API_URL: GM_getValue('apiUrl', 'https://your-railway-app.up.railway.app'),
-        CHECK_INTERVAL: 1000,
-        DEBOUNCE_DELAY: 500
+        API_URL: GM_getValue('apiUrl', 'https://suno.up.railway.app'),
+        CHECK_INTERVAL: 1000
     };
 
     let artistsData = null;
-    let debounceTimer = null;
-    let lastValue = '';
+    let replaceButton = null;
 
     // Fetch artists data from API
     async function fetchArtistsData() {
