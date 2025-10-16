@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   // Load settings
   const stored = await chrome.storage.local.get(['apiUrl', 'artistsCache']);
-  const apiUrl = stored.apiUrl || 'https://your-railway-app.up.railway.app';
+  const apiUrl = stored.apiUrl || 'https://suno.up.railway.app';
 
   // Update admin link
   adminLink.href = apiUrl;

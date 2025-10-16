@@ -5,7 +5,7 @@
   'use strict';
 
   const CONFIG = {
-    API_URL: 'https://your-railway-app.up.railway.app', // Replace with your Railway URL
+    API_URL: 'https://suno.up.railway.app',
     CHECK_INTERVAL: 1000 // Check every second for textarea
   };
 
