@@ -349,8 +349,9 @@ app.post('/api/generate-style', async (req, res) => {
   try {
     const { artistName, password, llmProvider: llmProviderFromReq, apiKey: apiKeyFromReq } = req.body;
 
-    // Simple password authentication
-    if (password !== process.env.ADMIN_PASSWORD) {
+    // Password optional - only check if provided (for admin panel use)
+    // If no password provided, it's from extension popup (read-only generation)
+    if (password && password !== process.env.ADMIN_PASSWORD) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
