@@ -3,13 +3,12 @@ document.addEventListener('DOMContentLoaded', async function() {
   const statusEl = document.getElementById('status');
   const artistCountEl = document.getElementById('artistCount');
   const refreshBtn = document.getElementById('refreshBtn');
-  const optionsBtn = document.getElementById('optionsBtn');
-  const adminLink = document.getElementById('adminLink');
   const llmProviderSelect = document.getElementById('llmProvider');
   const apiKeyInput = document.getElementById('apiKey');
   const saveApiKeyCheckbox = document.getElementById('saveApiKey');
   const promptInput = document.getElementById('promptInput');
   const generatePromptBtn = document.getElementById('generatePromptBtn');
+  const autoReplaceCheckbox = document.getElementById('autoReplaceEnabled');
 
   // Helper function
   function getProviderName(modelId) {
@@ -21,11 +20,13 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 
   // Load settings
-  const stored = await chrome.storage.local.get(['apiUrl', 'artistsCache', 'llmProvider', 'apiKey_google', 'apiKey_anthropic', 'apiKey_openai']);
+  const stored = await chrome.storage.local.get(['apiUrl', 'artistsCache', 'llmProvider', 'apiKey_google', 'apiKey_anthropic', 'apiKey_openai', 'autoReplaceEnabled']);
   const apiUrl = stored.apiUrl || 'https://suno.up.railway.app';
 
-  // Update admin link
-  adminLink.href = apiUrl;
+  // Load auto-replace setting
+  if (stored.autoReplaceEnabled !== undefined) {
+    autoReplaceCheckbox.checked = stored.autoReplaceEnabled;
+  }
 
   // Load LLM provider
   if (stored.llmProvider) {
@@ -165,9 +166,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   });
 
-  // Options button
-  optionsBtn.addEventListener('click', function() {
-    chrome.runtime.openOptionsPage();
+  // Auto-replace checkbox
+  autoReplaceCheckbox.addEventListener('change', async function() {
+    await chrome.storage.local.set({
+      autoReplaceEnabled: this.checked
+    });
+    console.log('Auto-replace setting updated:', this.checked);
   });
 
   // Initial status
