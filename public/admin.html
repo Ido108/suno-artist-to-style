@@ -557,13 +557,11 @@
             return !!localKey;
         }
 
-        function updateApiInputState() {
+        function updateApiInputState(loadSavedKey = false) {
             const modelId = document.getElementById('llmProvider').value;
             const apiKeyInput = document.getElementById('apiKey');
             const apiKeyNote = document.getElementById('apiKeyNote');
             const providerName = getProviderName(modelId);
-
-            const localKey = loadApiKeyFromLocalStorage(modelId);
 
             // Update note based on provider
             let noteText = `הזן API key עבור ${providerName}.`;
@@ -579,19 +577,22 @@
 
             apiKeyNote.innerHTML = noteText;
 
-            // Load saved key if exists
-            if (localKey) {
-                apiKeyInput.value = localKey;
-                document.getElementById('saveApiKey').checked = true;
-            } else {
-                apiKeyInput.value = '';
-                document.getElementById('saveApiKey').checked = false;
+            // Only load saved key if explicitly requested (on provider change or page load)
+            if (loadSavedKey) {
+                const localKey = loadApiKeyFromLocalStorage(modelId);
+                if (localKey) {
+                    apiKeyInput.value = localKey;
+                    document.getElementById('saveApiKey').checked = true;
+                } else {
+                    apiKeyInput.value = '';
+                    document.getElementById('saveApiKey').checked = false;
+                }
             }
         }
 
         async function initializeApiSettings() {
             // Load saved API key for current model
-            updateApiInputState();
+            updateApiInputState(true); // Pass true to load saved key
         }
 
         // Initialize app after login
@@ -605,21 +606,8 @@
             const saveApiKeyCheckbox = document.getElementById('saveApiKey');
 
             llmProviderDropdown.addEventListener('change', function() {
-                const modelId = this.value;
-                const savedKey = loadApiKeyFromLocalStorage(modelId);
-
-                if (savedKey) {
-                    apiKeyInput.value = savedKey;
-                    saveApiKeyCheckbox.checked = true;
-                } else {
-                    apiKeyInput.value = '';
-                    saveApiKeyCheckbox.checked = false;
-                }
-                updateApiInputState();
-            });
-
-            apiKeyInput.addEventListener('input', function() {
-                updateApiInputState();
+                // Load saved key when provider changes
+                updateApiInputState(true);
             });
 
             apiKeyInput.addEventListener('blur', function() {
@@ -627,7 +615,7 @@
                 if (saveApiKeyCheckbox.checked && this.value.trim()) {
                     const modelId = llmProviderDropdown.value;
                     saveApiKeyToLocalStorage(modelId, this.value.trim());
-                    console.log('API key auto-saved');
+                    showAlert('API key נשמר בדפדפן ✓', 'success');
                 }
             });
 
