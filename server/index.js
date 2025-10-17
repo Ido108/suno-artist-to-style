@@ -382,6 +382,7 @@ CRITICAL INSTRUCTIONS:
 6. Do NOT include the artist name in the output
 7. Do NOT use phrases like "in the style of" or "similar to"
 8. Output ONLY the comma-separated style description, no quotes, no explanations
+9. This can be used for a single artist or as part of processing multiple artists in a prompt
 
 FORMAT RULES:
 - Comma-separated list

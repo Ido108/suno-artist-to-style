@@ -8,8 +8,12 @@
   ],
   "host_permissions": [
     "https://suno.com/*",
-    "https://app.suno.ai/*"
+    "https://app.suno.ai/*",
+    "https://suno.up.railway.app/*"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": [

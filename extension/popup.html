@@ -12,7 +12,7 @@
         }
 
         body {
-            width: 300px;
+            width: 400px;
             padding: 20px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -25,11 +25,16 @@
             text-align: center;
         }
 
-        .status {
+        .section {
             background: rgba(255,255,255,0.2);
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 15px;
+        }
+
+        .section h2 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
         }
 
         .status-item {
@@ -50,16 +55,41 @@
             opacity: 0.9;
         }
 
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
         .btn {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: none;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .btn-primary {
@@ -81,16 +111,40 @@
             background: rgba(255,255,255,0.3);
         }
 
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 5px;
+            font-size: 0.85em;
+        }
+
+        .form-check input {
+            width: auto;
+        }
+
         a {
             color: white;
             text-decoration: none;
+        }
+
+        .note {
+            font-size: 0.75em;
+            opacity: 0.8;
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
     <h1>🎵 Suno Artist Replacer</h1>
 
-    <div class="status">
+    <div class="section">
+        <h2>📊 Status</h2>
         <div class="status-item">
             <span class="label">סטטוס:</span>
             <span class="value" id="status">טוען...</span>
@@ -99,6 +153,37 @@
             <span class="label">אמנים:</span>
             <span class="value" id="artistCount">-</span>
         </div>
+    </div>
+
+    <div class="section">
+        <h2>🤖 Generate Prompt</h2>
+
+        <div class="form-group">
+            <label>מודל AI:</label>
+            <select id="llmProvider">
+                <option value="gemini-2.0-flash" selected>Gemini 2.0 Flash</option>
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                <option value="claude-3-5-sonnet-latest">Claude 3.5 Sonnet</option>
+                <option value="gpt-4o">GPT-4o</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>API Key:</label>
+            <input type="password" id="apiKey" placeholder="הזן API key">
+            <div class="form-check">
+                <input type="checkbox" id="saveApiKey" checked>
+                <label>שמור בדפדפן</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>פרומפט (עם שמות אמנים):</label>
+            <textarea id="promptInput" placeholder="e.g., Rihanna, Backstreet Boys"></textarea>
+            <p class="note">הזן פרומפט עם שמות אמנים - יזוהו ויוחלפו בסטיילים</p>
+        </div>
+
+        <button class="btn btn-success" id="generatePromptBtn">✨ Generate Styles</button>
     </div>
 
     <button class="btn btn-primary" id="refreshBtn">🔄 רענן מאגר</button>
