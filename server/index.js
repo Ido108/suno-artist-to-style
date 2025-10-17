@@ -16,7 +16,23 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
 // Path to artist styles JSON file
-const ARTISTS_FILE = path.join(__dirname, '../artist_styles.json');
+// Use Railway volume if available, otherwise use local file
+const VOLUME_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || __dirname;
+const ARTISTS_FILE = path.join(VOLUME_PATH, 'artist_styles.json');
+const FALLBACK_FILE = path.join(__dirname, '../artist_styles.json');
+
+// Initialize: Copy from fallback if volume file doesn't exist
+if (process.env.RAILWAY_VOLUME_MOUNT_PATH && !fsSync.existsSync(ARTISTS_FILE)) {
+  console.log('Initializing artist_styles.json in Railway volume...');
+  try {
+    if (fsSync.existsSync(FALLBACK_FILE)) {
+      fsSync.copyFileSync(FALLBACK_FILE, ARTISTS_FILE);
+      console.log('Copied artist_styles.json to volume');
+    }
+  } catch (error) {
+    console.error('Error copying to volume:', error);
+  }
+}
 
 // Path to the API keys directory
 const API_KEYS_DIR = path.join(__dirname, '../api_keys');
