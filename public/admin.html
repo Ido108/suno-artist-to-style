@@ -407,11 +407,6 @@
             </div>
 
             <div class="form-group">
-                <label for="password">סיסמת ניהול:</label>
-                <input type="password" id="password" placeholder="הזן סיסמה">
-            </div>
-
-            <div class="form-group">
                 <label for="artistName">שם האמן:</label>
                 <div style="display: flex; gap: 10px;">
                     <input type="text" id="artistName" placeholder="לדוגמה: Billy Joel" style="flex: 1;">
@@ -468,22 +463,13 @@
                     throw new Error('Cannot connect to server');
                 }
 
-                // Verify password works (try a dummy toggle to test password)
-                const testResponse = await fetch(`${API_URL}/api/artists`, {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                // For now, we'll just accept any password and verify on actual operations
-                // Store password in session
+                // Store password in session and localStorage
                 sessionPassword = loginPassword;
+                localStorage.setItem('adminPassword', loginPassword);
 
                 // Hide login screen
                 document.getElementById('loginScreen').style.display = 'none';
                 document.getElementById('mainApp').style.display = 'block';
-
-                // Auto-fill password field
-                document.getElementById('password').value = sessionPassword;
 
                 // Initialize the app
                 initializeApp();
@@ -498,6 +484,20 @@
                 showLoginAlert('Login failed: ' + error.message, 'error');
                 loginBtn.disabled = false;
                 loginBtn.textContent = originalText;
+            }
+        }
+
+        // Check if already logged in
+        function checkLogin() {
+            const savedPassword = localStorage.getItem('adminPassword');
+
+            if (savedPassword) {
+                sessionPassword = savedPassword;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                initializeApp();
+                loadArtists();
+                initializeApiSettings();
             }
         }
 
@@ -596,36 +596,61 @@
 
         // Initialize app after login
         function initializeApp() {
+            // Setup toggle listener
+            setupToggleListener();
+
             // Event listeners for API settings
-            document.getElementById('llmProvider').addEventListener('change', function() {
+            const llmProviderDropdown = document.getElementById('llmProvider');
+            const apiKeyInput = document.getElementById('apiKey');
+            const saveApiKeyCheckbox = document.getElementById('saveApiKey');
+
+            llmProviderDropdown.addEventListener('change', function() {
                 const modelId = this.value;
                 const savedKey = loadApiKeyFromLocalStorage(modelId);
-                const apiKeyInput = document.getElementById('apiKey');
-                const saveApiKeyCheckbox = document.getElementById('saveApiKey');
 
-                apiKeyInput.value = savedKey || '';
-                saveApiKeyCheckbox.checked = !!savedKey;
+                if (savedKey) {
+                    apiKeyInput.value = savedKey;
+                    saveApiKeyCheckbox.checked = true;
+                } else {
+                    apiKeyInput.value = '';
+                    saveApiKeyCheckbox.checked = false;
+                }
                 updateApiInputState();
             });
 
-            document.getElementById('apiKey').addEventListener('input', updateApiInputState);
+            apiKeyInput.addEventListener('input', function() {
+                updateApiInputState();
+            });
 
-            document.getElementById('saveApiKey').addEventListener('change', function() {
-                const modelId = document.getElementById('llmProvider').value;
-                const key = document.getElementById('apiKey').value.trim();
+            apiKeyInput.addEventListener('blur', function() {
+                // Auto-save if checkbox is checked
+                if (saveApiKeyCheckbox.checked && this.value.trim()) {
+                    const modelId = llmProviderDropdown.value;
+                    saveApiKeyToLocalStorage(modelId, this.value.trim());
+                    console.log('API key auto-saved');
+                }
+            });
+
+            saveApiKeyCheckbox.addEventListener('change', function() {
+                const modelId = llmProviderDropdown.value;
+                const key = apiKeyInput.value.trim();
 
                 if (this.checked && key) {
                     saveApiKeyToLocalStorage(modelId, key);
+                    showAlert('API key נשמר בדפדפן', 'success');
+                } else if (!this.checked) {
+                    // Clear saved key
+                    const providerName = getProviderName(modelId);
+                    localStorage.removeItem(`apiKey_${providerName}`);
+                    showAlert('API key הוסר מהדפדפן', 'success');
                 }
-
-                updateApiInputState();
             });
         }
 
-        // Load artists on page load - DO NOT RUN until logged in
+        // Load artists on page load
         window.addEventListener('DOMContentLoaded', () => {
-            // Only show login screen
-            console.log('Page loaded - showing login screen');
+            // Check if already logged in
+            checkLogin();
         });
 
         async function loadArtists() {
@@ -686,14 +711,8 @@
         }
 
         async function saveArtist() {
-            const password = document.getElementById('password').value;
             const name = document.getElementById('artistName').value.trim();
             const style = document.getElementById('artistStyle').value.trim();
-
-            if (!password) {
-                showAlert('נא להזין סיסמה', 'error');
-                return;
-            }
 
             if (!name || !style) {
                 showAlert('נא למלא את שם האמן והסטייל', 'error');
@@ -704,7 +723,7 @@
                 const response = await fetch(`${API_URL}/api/artists`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, style, password })
+                    body: JSON.stringify({ name, style, password: sessionPassword })
                 });
 
                 const data = await response.json();
@@ -723,13 +742,6 @@
         }
 
         async function deleteArtist(name) {
-            const password = document.getElementById('password').value;
-
-            if (!password) {
-                showAlert('נא להזין סיסמה', 'error');
-                return;
-            }
-
             if (!confirm(`האם אתה בטוח שברצונך למחוק את ${name}?`)) {
                 return;
             }
@@ -738,7 +750,7 @@
                 const response = await fetch(`${API_URL}/api/artists/${encodeURIComponent(name)}`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
+                    body: JSON.stringify({ password: sessionPassword })
                 });
 
                 const data = await response.json();
@@ -760,21 +772,14 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        document.getElementById('enableToggle').addEventListener('change', async function() {
-            const password = document.getElementById('password').value;
-
-            if (!password) {
-                showAlert('נא להזין סיסמה', 'error');
-                this.checked = !this.checked;
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/api/toggle`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
-                });
+        function setupToggleListener() {
+            document.getElementById('enableToggle').addEventListener('change', async function() {
+                try {
+                    const response = await fetch(`${API_URL}/api/toggle`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ password: sessionPassword })
+                    });
 
                 const data = await response.json();
 
@@ -811,33 +816,27 @@
 
         // AI Style Generator
         async function generateStyle() {
-            const password = document.getElementById('password').value;
             const artistName = document.getElementById('artistName').value.trim();
             const llmProvider = document.getElementById('llmProvider').value;
             const apiKey = document.getElementById('apiKey').value.trim();
-            const saveApiKey = document.getElementById('saveApiKey').checked;
             const generateBtn = document.getElementById('generateBtn');
             const originalText = generateBtn.innerHTML;
-
-            if (!password) {
-                showAlert('נא להזין סיסמה תחילה', 'error');
-                return;
-            }
 
             if (!artistName) {
                 showAlert('נא להזין שם אמן תחילה', 'error');
                 return;
             }
 
-            // Save API key if checkbox is checked
-            if (apiKey && saveApiKey) {
-                saveApiKeyToLocalStorage(llmProvider, apiKey);
-            }
-
             // Check if API key is available
             if (!apiKey) {
                 showAlert(`דרוש API key. הזן במקטע "הגדרות AI Generator".`, 'error');
                 return;
+            }
+
+            // Auto-save API key if checkbox is checked
+            const saveApiKeyCheckbox = document.getElementById('saveApiKey');
+            if (saveApiKeyCheckbox.checked && apiKey) {
+                saveApiKeyToLocalStorage(llmProvider, apiKey);
             }
 
             // Show loading state
@@ -850,9 +849,9 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         artistName,
-                        password,
+                        password: sessionPassword,
                         llmProvider,
-                        apiKey: apiKey || undefined
+                        apiKey: apiKey
                     })
                 });
 
