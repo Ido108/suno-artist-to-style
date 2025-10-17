@@ -781,21 +781,22 @@
                         body: JSON.stringify({ password: sessionPassword })
                     });
 
-                const data = await response.json();
+                    const data = await response.json();
 
-                if (response.ok) {
-                    artistsData.enabled = data.enabled;
-                    updateStats();
-                    showAlert(`המערכת ${data.enabled ? 'הופעלה' : 'כובתה'} בהצלחה`, 'success');
-                } else {
-                    showAlert(data.error || 'שגיאה', 'error');
+                    if (response.ok) {
+                        artistsData.enabled = data.enabled;
+                        updateStats();
+                        showAlert(`המערכת ${data.enabled ? 'הופעלה' : 'כובתה'} בהצלחה`, 'success');
+                    } else {
+                        showAlert(data.error || 'שגיאה', 'error');
+                        this.checked = !this.checked;
+                    }
+                } catch (error) {
+                    showAlert('שגיאת רשת', 'error');
                     this.checked = !this.checked;
                 }
-            } catch (error) {
-                showAlert('שגיאת רשת', 'error');
-                this.checked = !this.checked;
-            }
-        });
+            });
+        }
 
         function showAlert(message, type) {
             const alertContainer = document.getElementById('alertContainer');
