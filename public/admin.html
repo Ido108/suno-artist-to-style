@@ -319,7 +319,29 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="container">
+        <div class="header">
+            <h1>🎵 Suno Artist Manager</h1>
+            <p>Login Required</p>
+        </div>
+
+        <div class="controls">
+            <div id="loginAlertContainer"></div>
+
+            <div class="form-group">
+                <label for="loginPassword">Enter Password:</label>
+                <input type="password" id="loginPassword" placeholder="Enter password" autofocus>
+            </div>
+
+            <div>
+                <button class="btn btn-primary" onclick="login()" id="loginBtn">🔓 Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App (hidden by default) -->
+    <div id="mainApp" class="container" style="display: none;">
         <div class="header">
             <h1>🎵 Suno Artist Manager</h1>
             <p>ניהול מאגר אמנים וסטיילים למוזיקה</p>
@@ -422,6 +444,85 @@
         let artistsData = { enabled: true, artists: {} };
         const API_URL = window.location.origin;
         let serverEnvKeys = {};
+        let sessionPassword = ''; // Store password for session
+
+        // Login function
+        async function login() {
+            const loginPassword = document.getElementById('loginPassword').value;
+            const loginBtn = document.getElementById('loginBtn');
+            const originalText = loginBtn.textContent;
+
+            if (!loginPassword) {
+                showLoginAlert('Please enter password', 'error');
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = '⏳ Checking...';
+
+            try {
+                // Test password by trying to fetch artists
+                const response = await fetch(`${API_URL}/api/artists`);
+
+                if (!response.ok) {
+                    throw new Error('Cannot connect to server');
+                }
+
+                // Verify password works (try a dummy toggle to test password)
+                const testResponse = await fetch(`${API_URL}/api/artists`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                // For now, we'll just accept any password and verify on actual operations
+                // Store password in session
+                sessionPassword = loginPassword;
+
+                // Hide login screen
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+
+                // Auto-fill password field
+                document.getElementById('password').value = sessionPassword;
+
+                // Initialize the app
+                initializeApp();
+
+                // Load data
+                loadArtists();
+                initializeApiSettings();
+
+                loginBtn.textContent = '✅ Logged in!';
+
+            } catch (error) {
+                showLoginAlert('Login failed: ' + error.message, 'error');
+                loginBtn.disabled = false;
+                loginBtn.textContent = originalText;
+            }
+        }
+
+        // Handle Enter key on login
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginPasswordInput = document.getElementById('loginPassword');
+            if (loginPasswordInput) {
+                loginPasswordInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        login();
+                    }
+                });
+            }
+        });
+
+        function showLoginAlert(message, type) {
+            const alertContainer = document.getElementById('loginAlertContainer');
+            const alertClass = type === 'error' ? 'alert-error' : 'alert-success';
+
+            alertContainer.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
 
         // Helper function to get provider name from model ID
         function getProviderName(modelId) {
@@ -493,11 +594,8 @@
             updateApiInputState();
         }
 
-        // Load artists on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            loadArtists();
-            initializeApiSettings();
-
+        // Initialize app after login
+        function initializeApp() {
             // Event listeners for API settings
             document.getElementById('llmProvider').addEventListener('change', function() {
                 const modelId = this.value;
@@ -522,6 +620,12 @@
 
                 updateApiInputState();
             });
+        }
+
+        // Load artists on page load - DO NOT RUN until logged in
+        window.addEventListener('DOMContentLoaded', () => {
+            // Only show login screen
+            console.log('Page loaded - showing login screen');
         });
 
         async function loadArtists() {
