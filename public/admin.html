@@ -880,13 +880,13 @@
 
         // AI Style Generator
         async function generateStyle() {
-            const artistName = document.getElementById('artistName').value.trim();
+            const artistNameInput = document.getElementById('artistName').value.trim();
             const llmProvider = document.getElementById('llmProvider').value;
             const apiKey = document.getElementById('apiKey').value.trim();
             const generateBtn = document.getElementById('generateBtn');
             const originalText = generateBtn.innerHTML;
 
-            if (!artistName) {
+            if (!artistNameInput) {
                 showAlert('נא להזין שם אמן תחילה', 'error');
                 return;
             }
@@ -903,47 +903,95 @@
                 saveApiKeyToLocalStorage(llmProvider, apiKey);
             }
 
+            // Check if multiple artists (separated by commas)
+            const artistNames = artistNameInput.split(',').map(name => name.trim()).filter(name => name.length > 0);
+
+            if (artistNames.length === 0) {
+                showAlert('נא להזין שם אמן תקין', 'error');
+                return;
+            }
+
             // Show loading state
             generateBtn.disabled = true;
-            generateBtn.innerHTML = '⏳ מייצר...';
+            generateBtn.innerHTML = `⏳ מייצר ${artistNames.length} אמנים...`;
+
+            let successCount = 0;
+            let failCount = 0;
 
             try {
-                const response = await fetch(`${API_URL}/api/generate-style`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        artistName,
-                        password: sessionPassword,
-                        llmProvider,
-                        apiKey: apiKey
-                    })
-                });
+                for (const artistName of artistNames) {
+                    try {
+                        // Generate style for this artist
+                        const response = await fetch(`${API_URL}/api/generate-style`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                artistName,
+                                password: sessionPassword,
+                                llmProvider,
+                                apiKey: apiKey
+                            })
+                        });
 
-                const data = await response.json();
+                        const data = await response.json();
 
-                if (response.ok) {
-                    // Fill the style textarea with generated content
-                    document.getElementById('artistStyle').value = data.generatedStyle;
+                        if (response.ok) {
+                            const generatedStyle = data.generatedStyle;
 
-                    const providerDisplay = data.provider || llmProvider;
-                    showAlert(`✨ סטייל נוצר בהצלחה עבור ${artistName}! (${providerDisplay})`, 'success');
+                            // Auto-save this artist
+                            const saveResponse = await fetch(`${API_URL}/api/artists`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    name: artistName,
+                                    style: generatedStyle,
+                                    password: sessionPassword
+                                })
+                            });
 
-                    // Success animation
-                    generateBtn.innerHTML = '✅ נוצר!';
-                    generateBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
-
-                    setTimeout(() => {
-                        generateBtn.innerHTML = originalText;
-                        generateBtn.style.background = '';
-                        generateBtn.disabled = false;
-                    }, 2000);
-                } else {
-                    showAlert(data.error || 'שגיאה ביצירת סטייל', 'error');
-                    generateBtn.innerHTML = originalText;
-                    generateBtn.disabled = false;
+                            if (saveResponse.ok) {
+                                successCount++;
+                                console.log(`✓ ${artistName}: generated and saved`);
+                            } else {
+                                failCount++;
+                                console.error(`✗ ${artistName}: generated but failed to save`);
+                            }
+                        } else {
+                            failCount++;
+                            console.error(`✗ ${artistName}: ${data.error}`);
+                        }
+                    } catch (error) {
+                        failCount++;
+                        console.error(`✗ ${artistName}: ${error.message}`);
+                    }
                 }
+
+                // Clear the input fields
+                document.getElementById('artistName').value = '';
+                document.getElementById('artistStyle').value = '';
+
+                // Reload artists list
+                loadArtists();
+
+                // Show results
+                if (successCount > 0) {
+                    showAlert(`✨ ${successCount} אמנים נוצרו ונשמרו בהצלחה!${failCount > 0 ? ` (${failCount} נכשלו)` : ''}`, 'success');
+                } else {
+                    showAlert(`❌ כל ${failCount} האמנים נכשלו`, 'error');
+                }
+
+                // Success animation
+                generateBtn.innerHTML = `✅ ${successCount}/${artistNames.length} נוצרו!`;
+                generateBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+
+                setTimeout(() => {
+                    generateBtn.innerHTML = originalText;
+                    generateBtn.style.background = '';
+                    generateBtn.disabled = false;
+                }, 3000);
+
             } catch (error) {
-                showAlert('שגיאת רשת: ' + error.message, 'error');
+                showAlert('שגיאה כללית: ' + error.message, 'error');
                 generateBtn.innerHTML = originalText;
                 generateBtn.disabled = false;
             }
