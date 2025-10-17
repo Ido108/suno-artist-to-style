@@ -424,6 +424,7 @@
             <div>
                 <button class="btn btn-primary" onclick="saveArtist()">💾 שמור/עדכן אמן</button>
                 <button class="btn btn-success" onclick="loadArtists()">🔄 רענן רשימה</button>
+                <button class="btn" onclick="downloadJSON()" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white;">📥 הורד JSON</button>
             </div>
         </div>
 
@@ -876,6 +877,30 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML.replace(/'/g, "\\'");
+        }
+
+        // Download artists as JSON
+        function downloadJSON() {
+            if (!artistsData || !artistsData.artists) {
+                showAlert('אין נתונים להורדה', 'error');
+                return;
+            }
+
+            const jsonData = JSON.stringify(artistsData, null, 2);
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+
+            a.href = url;
+            a.download = `artist_styles_${timestamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showAlert('הקובץ הורד בהצלחה!', 'success');
+            console.log('Downloaded artist_styles.json');
         }
 
         // AI Style Generator
