@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Suno Artist Style Replacer",
+  "name": "SunoMate",
   "version": "2.0.0",
-  "description": "מוסיף כפתור להחלפת שמות אמנים בתיאור מפורט של הסטייל שלהם ב-Suno",
+  "description": "AI-powered artist style generator for Suno - Replace artist names with detailed style descriptions",
   "permissions": [
     "storage"
   ],
