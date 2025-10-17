@@ -8,9 +8,8 @@ document.addEventListener('DOMContentLoaded', async function() {
   const saveApiKeyCheckbox = document.getElementById('saveApiKey');
   const promptInput = document.getElementById('promptInput');
   const generatePromptBtn = document.getElementById('generatePromptBtn');
-  const autoReplaceCheckbox = document.getElementById('autoReplaceEnabled');
+  const sunoMateEnabledCheckbox = document.getElementById('sunoMateEnabled');
 
-  // Helper function
   function getProviderName(modelId) {
     if (!modelId) return 'unknown';
     if (modelId.startsWith('gemini')) { return 'google'; }
@@ -19,13 +18,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     return 'unknown';
   }
 
-  // Load settings
-  const stored = await chrome.storage.local.get(['apiUrl', 'artistsCache', 'llmProvider', 'apiKey_google', 'apiKey_anthropic', 'apiKey_openai', 'autoReplaceEnabled']);
+  const stored = await chrome.storage.local.get(['apiUrl', 'artistsCache', 'llmProvider', 'apiKey_google', 'apiKey_anthropic', 'apiKey_openai', 'sunoMateEnabled']);
   const apiUrl = stored.apiUrl || 'https://suno.up.railway.app';
 
-  // Load auto-replace setting
-  if (stored.autoReplaceEnabled !== undefined) {
-    autoReplaceCheckbox.checked = stored.autoReplaceEnabled;
+  // Load enabled setting
+  if (stored.sunoMateEnabled !== undefined) {
+    sunoMateEnabledCheckbox.checked = stored.sunoMateEnabled;
   }
 
   // Load LLM provider
@@ -48,7 +46,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   loadApiKeyForProvider();
 
-  // Update API key when provider changes
   llmProviderSelect.addEventListener('change', loadApiKeyForProvider);
 
   // Save API key
@@ -60,7 +57,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         [`apiKey_${provider}`]: this.value.trim()
       };
       await chrome.storage.local.set(updateData);
-      console.log('API key saved');
     }
   });
 
@@ -84,7 +80,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     generatePromptBtn.disabled = true;
 
     try {
-      // Send to background script to generate for all artists in prompt
       const response = await chrome.runtime.sendMessage({
         type: 'GENERATE_PROMPT',
         data: {
@@ -124,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const minutes = Math.floor(cacheAge / 60000);
 
         if (minutes > 0) {
-          artistCountEl.textContent += ` (לפני ${minutes} דק׳)`;
+          artistCountEl.textContent += ` (${minutes}m ago)`;
         }
       } else {
         statusEl.textContent = 'לא נטען';
@@ -166,14 +161,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
   });
 
-  // Auto-replace checkbox
-  autoReplaceCheckbox.addEventListener('change', async function() {
+  // SunoMate toggle
+  sunoMateEnabledCheckbox.addEventListener('change', async function() {
     await chrome.storage.local.set({
-      autoReplaceEnabled: this.checked
+      sunoMateEnabled: this.checked
     });
-    console.log('Auto-replace setting updated:', this.checked);
+    console.log('SunoMate enabled:', this.checked);
   });
 
-  // Initial status
   updateStatus();
 });

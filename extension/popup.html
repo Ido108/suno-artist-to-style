@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -102,15 +102,6 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
 
-        .btn-secondary {
-            background: rgba(255,255,255,0.2);
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
         .btn-success {
             background: #28a745;
             color: white;
@@ -128,11 +119,6 @@
             width: auto;
         }
 
-        a {
-            color: white;
-            text-decoration: none;
-        }
-
         .note {
             font-size: 0.75em;
             opacity: 0.8;
@@ -146,11 +132,11 @@
     <div class="section">
         <h2>📊 Status</h2>
         <div class="status-item">
-            <span class="label">סטטוס:</span>
-            <span class="value" id="status">טוען...</span>
+            <span class="label">Status:</span>
+            <span class="value" id="status">Loading...</span>
         </div>
         <div class="status-item">
-            <span class="label">אמנים:</span>
+            <span class="label">Artists:</span>
             <span class="value" id="artistCount">-</span>
         </div>
     </div>
@@ -159,7 +145,7 @@
         <h2>🤖 Generate Prompt</h2>
 
         <div class="form-group">
-            <label>מודל AI:</label>
+            <label>AI Model:</label>
             <select id="llmProvider">
                 <option value="gemini-2.0-flash" selected>Gemini 2.0 Flash</option>
                 <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
@@ -170,17 +156,17 @@
 
         <div class="form-group">
             <label>API Key:</label>
-            <input type="password" id="apiKey" placeholder="הזן API key">
+            <input type="password" id="apiKey" placeholder="Enter API key">
             <div class="form-check">
                 <input type="checkbox" id="saveApiKey" checked>
-                <label>שמור בדפדפן</label>
+                <label>Save in browser</label>
             </div>
         </div>
 
         <div class="form-group">
-            <label>פרומפט (עם שמות אמנים):</label>
+            <label>Prompt (with artist names):</label>
             <textarea id="promptInput" placeholder="e.g., Rihanna, Backstreet Boys"></textarea>
-            <p class="note">הזן פרומפט עם שמות אמנים - יזוהו ויוחלפו בסטיילים</p>
+            <p class="note">Enter prompt with artist names - they will be detected and replaced with styles</p>
         </div>
 
         <button class="btn btn-success" id="generatePromptBtn">✨ Generate Styles</button>
@@ -189,13 +175,13 @@
     <div class="section">
         <h2>⚙️ Settings</h2>
         <div class="form-check">
-            <input type="checkbox" id="autoReplaceEnabled" checked>
-            <label>Auto-replace on Create button click</label>
+            <input type="checkbox" id="sunoMateEnabled" checked>
+            <label>Enable SunoMate</label>
         </div>
-        <p class="note">When enabled, clicking Suno's Create button will auto-replace artist names</p>
+        <p class="note">When enabled, artist names will be replaced when clicking Create in Suno</p>
     </div>
 
-    <button class="btn btn-primary" id="refreshBtn">🔄 רענן מאגר</button>
+    <button class="btn btn-primary" id="refreshBtn">🔄 Refresh Database</button>
 
     <script src="popup.js"></script>
 </body>
