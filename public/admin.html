@@ -678,6 +678,7 @@
                     <div class="artist-style">${style}</div>
                     <div class="artist-actions">
                         <button class="btn btn-primary" onclick="editArtist('${escapeHtml(name)}', '${escapeHtml(style)}')">✏️ ערוך</button>
+                        <button class="btn btn-success" onclick="regenerateArtist('${escapeHtml(name)}')">🔄 Regenerate</button>
                         <button class="btn btn-danger" onclick="deleteArtist('${escapeHtml(name)}')">🗑️ מחק</button>
                     </div>
                 </div>
@@ -758,6 +759,80 @@
             document.getElementById('artistName').value = name;
             document.getElementById('artistStyle').value = style;
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function regenerateArtist(name) {
+            const llmProvider = document.getElementById('llmProvider').value;
+            const apiKey = document.getElementById('apiKey').value.trim();
+
+            if (!apiKey) {
+                showAlert('דרוש API key. הזן במקטע "הגדרות AI Generator".', 'error');
+                return;
+            }
+
+            if (!confirm(`Regenerate style for "${name}" using AI?`)) {
+                return;
+            }
+
+            // Find the artist card to show loading state
+            const cards = document.querySelectorAll('.artist-card');
+            let targetCard = null;
+            for (const card of cards) {
+                if (card.dataset.name === name) {
+                    targetCard = card;
+                    break;
+                }
+            }
+
+            if (targetCard) {
+                const styleDiv = targetCard.querySelector('.artist-style');
+                const originalStyle = styleDiv.textContent;
+                styleDiv.innerHTML = '<span style="color: #667eea;">⏳ Generating...</span>';
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/generate-style`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        artistName: name,
+                        password: sessionPassword,
+                        llmProvider,
+                        apiKey: apiKey
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const newStyle = data.generatedStyle;
+
+                    // Auto-save the new style
+                    const saveResponse = await fetch(`${API_URL}/api/artists`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name,
+                            style: newStyle,
+                            password: sessionPassword
+                        })
+                    });
+
+                    if (saveResponse.ok) {
+                        showAlert(`✨ "${name}" regenerated and saved!`, 'success');
+                        loadArtists(); // Reload the list
+                    } else {
+                        throw new Error('Failed to save regenerated style');
+                    }
+                } else {
+                    throw new Error(data.error || 'Failed to generate');
+                }
+            } catch (error) {
+                showAlert('שגיאה: ' + error.message, 'error');
+                if (targetCard) {
+                    loadArtists(); // Reload to restore original
+                }
+            }
         }
 
         function setupToggleListener() {
