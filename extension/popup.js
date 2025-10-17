@@ -9,6 +9,16 @@ document.addEventListener('DOMContentLoaded', async function() {
   const promptInput = document.getElementById('promptInput');
   const generatePromptBtn = document.getElementById('generatePromptBtn');
   const sunoMateEnabledCheckbox = document.getElementById('sunoMateEnabled');
+  const toggleApiSettings = document.getElementById('toggleApiSettings');
+  const apiSettingsSection = document.getElementById('apiSettingsSection');
+
+  // Toggle API settings
+  toggleApiSettings.addEventListener('click', (e) => {
+    e.preventDefault();
+    const isVisible = apiSettingsSection.style.display !== 'none';
+    apiSettingsSection.style.display = isVisible ? 'none' : 'block';
+    toggleApiSettings.textContent = isVisible ? '⚙️ API Settings (click to expand)' : '⚙️ API Settings (click to collapse)';
+  });
 
   function getProviderName(modelId) {
     if (!modelId) return 'unknown';
@@ -31,6 +41,25 @@ document.addEventListener('DOMContentLoaded', async function() {
     llmProviderSelect.value = stored.llmProvider;
   }
 
+  // Update API indicator
+  function updateApiIndicator() {
+    const provider = getProviderName(llmProviderSelect.value);
+    const savedKey = stored[`apiKey_${provider}`];
+    const currentKey = apiKeyInput.value.trim();
+    const hasKey = !!(savedKey || currentKey);
+
+    const modelName = llmProviderSelect.options[llmProviderSelect.selectedIndex].text.split(' - ')[1] || 'Unknown';
+    const indicator = document.getElementById('apiIndicator');
+
+    if (hasKey) {
+      indicator.innerHTML = `✅ ${modelName}`;
+      indicator.style.color = 'rgba(255,255,255,0.9)';
+    } else {
+      indicator.innerHTML = `⚠️ No API key`;
+      indicator.style.color = 'rgba(255,200,0,0.9)';
+    }
+  }
+
   // Load API key for current provider
   function loadApiKeyForProvider() {
     const provider = getProviderName(llmProviderSelect.value);
@@ -42,6 +71,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       apiKeyInput.value = '';
       saveApiKeyCheckbox.checked = false;
     }
+    updateApiIndicator();
   }
 
   loadApiKeyForProvider();
@@ -57,8 +87,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         [`apiKey_${provider}`]: this.value.trim()
       };
       await chrome.storage.local.set(updateData);
+      updateApiIndicator();
     }
   });
+
+  apiKeyInput.addEventListener('input', updateApiIndicator);
 
   // Generate Prompt
   generatePromptBtn.addEventListener('click', async function() {
@@ -72,7 +105,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     if (!apiKey) {
-      alert('נא להזין API key');
+      // Open API settings instead of alert
+      apiSettingsSection.style.display = 'block';
+      toggleApiSettings.textContent = '⚙️ API Settings (click to collapse)';
+      apiKeyInput.focus();
       return;
     }
 

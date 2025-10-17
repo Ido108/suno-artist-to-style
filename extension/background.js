@@ -1,5 +1,16 @@
 // Background script for handling prompt generation
 
+// Normalize string for comparison (remove accents, apostrophes, special chars)
+function normalizeForComparison(str) {
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/[''`]/g, '') // Remove apostrophes
+    .replace(/[^\w\s]/g, '') // Remove special chars
+    .trim();
+}
+
 // Helper function to call LLM API
 async function callLLMAPI(provider, apiKey, artistName, apiUrl) {
   try {
@@ -75,11 +86,47 @@ async function handleGeneratePrompt(data) {
         const generatedStyle = await callLLMAPI(llmProvider, apiKey, artistName, apiUrl);
 
         if (generatedStyle) {
-          // Replace in prompt (case-insensitive, whole word)
-          const regex = new RegExp(`\\b${artistName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+          // Replace in prompt using fuzzy matching (handles missing accents/apostrophes)
+          const normalizedArtist = normalizeForComparison(artistName);
+          const words = modifiedPrompt.split(/\b/);
+          let newWords = [];
+          let i = 0;
+          let replaced = false;
 
-          if (regex.test(modifiedPrompt)) {
-            modifiedPrompt = modifiedPrompt.replace(regex, generatedStyle);
+          while (i < words.length) {
+            let matched = false;
+            let matchLength = 0;
+
+            // Try matching multiple words
+            const artistWords = artistName.split(/\s+/);
+            let candidateText = '';
+            let candidateLength = 0;
+
+            for (let j = 0; j < artistWords.length * 2 + 1 && i + j < words.length; j++) {
+              candidateText += words[i + j];
+              candidateLength++;
+
+              const normalizedCandidate = normalizeForComparison(candidateText);
+
+              if (normalizedCandidate === normalizedArtist) {
+                matched = true;
+                matchLength = candidateLength;
+                break;
+              }
+            }
+
+            if (matched && !replaced) {
+              newWords.push(generatedStyle);
+              i += matchLength;
+              replaced = true;
+            } else {
+              newWords.push(words[i]);
+              i++;
+            }
+          }
+
+          if (replaced) {
+            modifiedPrompt = newWords.join('');
             successfulReplacements.push(artistName);
             console.log(`Replaced: ${artistName}`);
           }

@@ -132,6 +132,15 @@
             overflow-y: auto;
         }
 
+        .search-bar {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 15px 0;
+            z-index: 10;
+            margin-bottom: 20px;
+        }
+
         .artist-card {
             background: white;
             border: 2px solid #e9ecef;
@@ -373,36 +382,48 @@
             </div>
 
             <div class="api-settings">
-                <h3>🤖 הגדרות AI Generator</h3>
-
-                <div class="form-group">
-                    <label for="llmProvider">מודל AI:</label>
-                    <select id="llmProvider">
-                        <option value="gemini-2.5-flash">Google - Gemini 2.5 Flash</option>
-                        <option value="gemini-2.0-flash" selected>Google - Gemini 2.0 Flash (מומלץ)</option>
-                        <option value="gemini-1.5-pro">Google - Gemini 1.5 Pro</option>
-                        <option value="gemini-2.5-pro-preview-05-06">Google - Gemini 2.5 Pro Preview</option>
-                        <option value="claude-sonnet-4-5-20250929">Anthropic - Claude 4.5 Sonnet (החדש ביותר)</option>
-                        <option value="claude-sonnet-4-20250514">Anthropic - Claude 4 Sonnet</option>
-                        <option value="claude-3-7-sonnet-20250219">Anthropic - Claude 3.7 Sonnet</option>
-                        <option value="claude-3-5-sonnet-latest">Anthropic - Claude 3.5 Sonnet</option>
-                        <option value="claude-3-5-haiku-latest">Anthropic - Claude 3.5 Haiku</option>
-                        <option value="claude-3-haiku-20240307">Anthropic - Claude 3 Haiku</option>
-                        <option value="gpt-5-chat-latest">OpenAI - GPT-5 Chat Latest</option>
-                        <option value="gpt-4.1-2025-04-14">OpenAI - GPT-4.1</option>
-                        <option value="gpt-4.1-mini">OpenAI - GPT-4.1-mini</option>
-                        <option value="gpt-4o">OpenAI - GPT-4o</option>
-                        <option value="o4-mini">OpenAI - o4-Mini</option>
-                    </select>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0;">🤖 הגדרות AI Generator</h3>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <div style="font-size: 0.85em; color: #856404;" id="adminApiIndicator">
+                            -
+                        </div>
+                        <a href="#" id="toggleAdminApiSettings" style="color: #856404; font-size: 0.9em; text-decoration: underline;">
+                            הגדרות ▼
+                        </a>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="apiKey">API Key:</label>
-                    <input type="password" id="apiKey" placeholder="הדבק את ה-API key שלך כאן" required>
-                    <p class="form-note" id="apiKeyNote">הזן את ה-API key שלך למודל שבחרת.</p>
-                    <div class="form-check">
-                        <input type="checkbox" id="saveApiKey" checked>
-                        <label for="saveApiKey">שמור API key בדפדפן (רק במכשיר הזה)</label>
+                <div id="adminApiSettingsSection" style="display: none;">
+                    <div class="form-group">
+                        <label for="llmProvider">מודל AI:</label>
+                        <select id="llmProvider">
+                            <option value="gemini-2.5-flash">Google - Gemini 2.5 Flash</option>
+                            <option value="gemini-2.0-flash" selected>Google - Gemini 2.0 Flash (מומלץ)</option>
+                            <option value="gemini-1.5-pro">Google - Gemini 1.5 Pro</option>
+                            <option value="gemini-2.5-pro-preview-05-06">Google - Gemini 2.5 Pro Preview</option>
+                            <option value="claude-sonnet-4-5-20250929">Anthropic - Claude 4.5 Sonnet (החדש ביותר)</option>
+                            <option value="claude-sonnet-4-20250514">Anthropic - Claude 4 Sonnet</option>
+                            <option value="claude-3-7-sonnet-20250219">Anthropic - Claude 3.7 Sonnet</option>
+                            <option value="claude-3-5-sonnet-latest">Anthropic - Claude 3.5 Sonnet</option>
+                            <option value="claude-3-5-haiku-latest">Anthropic - Claude 3.5 Haiku</option>
+                            <option value="claude-3-haiku-20240307">Anthropic - Claude 3 Haiku</option>
+                            <option value="gpt-5-chat-latest">OpenAI - GPT-5 Chat Latest</option>
+                            <option value="gpt-4.1-2025-04-14">OpenAI - GPT-4.1</option>
+                            <option value="gpt-4.1-mini">OpenAI - GPT-4.1-mini</option>
+                            <option value="gpt-4o">OpenAI - GPT-4o</option>
+                            <option value="o4-mini">OpenAI - o4-Mini</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="apiKey">API Key:</label>
+                        <input type="password" id="apiKey" placeholder="הדבק את ה-API key שלך כאן">
+                        <p class="form-note" id="apiKeyNote">הזן את ה-API key שלך למודל שבחרת.</p>
+                        <div class="form-check">
+                            <input type="checkbox" id="saveApiKey" checked>
+                            <label for="saveApiKey">שמור API key בדפדפן (רק במכשיר הזה)</label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -432,6 +453,14 @@
         <div class="artists-list">
             <div class="search-bar">
                 <input type="text" id="searchInput" placeholder="🔍 חפש אמן..." onkeyup="filterArtists()">
+                <div style="margin-top: 10px; display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="sortArtists('name')" style="font-size: 14px; padding: 8px 16px;">
+                        🔤 Sort by Name
+                    </button>
+                    <button class="btn btn-success" onclick="sortArtists('recent')" style="font-size: 14px; padding: 8px 16px;">
+                        🕐 Sort by Recent
+                    </button>
+                </div>
             </div>
             <div id="artistsList"></div>
         </div>
@@ -597,10 +626,40 @@
             updateApiInputState(true); // Pass true to load saved key
         }
 
+        // Update admin API indicator
+        function updateAdminApiIndicator() {
+            const modelId = document.getElementById('llmProvider').value;
+            const savedKey = loadApiKeyFromLocalStorage(modelId);
+            const currentKey = document.getElementById('apiKey').value.trim();
+            const hasKey = !!(savedKey || currentKey);
+
+            const modelName = document.getElementById('llmProvider').options[document.getElementById('llmProvider').selectedIndex].text;
+            const indicator = document.getElementById('adminApiIndicator');
+
+            if (hasKey) {
+                indicator.innerHTML = `✅ ${modelName}`;
+                indicator.style.color = '#28a745';
+            } else {
+                indicator.innerHTML = `⚠️ No API key`;
+                indicator.style.color = '#dc3545';
+            }
+        }
+
         // Initialize app after login
         function initializeApp() {
             // Setup toggle listener
             setupToggleListener();
+
+            // Toggle admin API settings
+            const toggleAdminApiSettings = document.getElementById('toggleAdminApiSettings');
+            const adminApiSettingsSection = document.getElementById('adminApiSettingsSection');
+
+            toggleAdminApiSettings.addEventListener('click', function(e) {
+                e.preventDefault();
+                const isVisible = adminApiSettingsSection.style.display !== 'none';
+                adminApiSettingsSection.style.display = isVisible ? 'none' : 'block';
+                this.textContent = isVisible ? 'הגדרות ▼' : 'הגדרות ▲';
+            });
 
             // Event listeners for API settings
             const llmProviderDropdown = document.getElementById('llmProvider');
@@ -610,6 +669,11 @@
             llmProviderDropdown.addEventListener('change', function() {
                 // Load saved key when provider changes
                 updateApiInputState(true);
+                updateAdminApiIndicator();
+            });
+
+            apiKeyInput.addEventListener('input', function() {
+                updateAdminApiIndicator();
             });
 
             apiKeyInput.addEventListener('blur', function() {
@@ -618,6 +682,7 @@
                     const modelId = llmProviderDropdown.value;
                     saveApiKeyToLocalStorage(modelId, this.value.trim());
                     showAlert('API key נשמר בדפדפן ✓', 'success');
+                    updateAdminApiIndicator();
                 }
             });
 
@@ -634,7 +699,11 @@
                     localStorage.removeItem(`apiKey_${providerName}`);
                     showAlert('API key הוסר מהדפדפן', 'success');
                 }
+                updateAdminApiIndicator();
             });
+
+            // Update indicator on load
+            updateAdminApiIndicator();
         }
 
         // Load artists on page load
@@ -665,16 +734,37 @@
             document.getElementById('enableToggle').checked = artistsData.enabled;
         }
 
+        let currentSort = 'name'; // Default sort
+
         function displayArtists() {
             const artistsList = document.getElementById('artistsList');
-            const artists = Object.entries(artistsData.artists).sort((a, b) => a[0].localeCompare(b[0]));
+
+            // Get artists with timestamps if available
+            let artists = Object.entries(artistsData.artists || {});
 
             if (artists.length === 0) {
                 artistsList.innerHTML = '<p style="text-align: center; color: #6c757d;">אין אמנים במאגר</p>';
                 return;
             }
 
-            artistsList.innerHTML = artists.map(([name, style]) => `
+            // Add timestamps from metadata if available
+            const artistsWithMeta = artists.map(([name, styleOrObj]) => {
+                // Support both string styles and object with {style, timestamp}
+                if (typeof styleOrObj === 'object' && styleOrObj.style) {
+                    return [name, styleOrObj.style, styleOrObj.timestamp || 0];
+                } else {
+                    return [name, styleOrObj, artistsData.metadata?.[name]?.timestamp || 0];
+                }
+            });
+
+            // Sort based on current sort mode
+            if (currentSort === 'name') {
+                artistsWithMeta.sort((a, b) => a[0].localeCompare(b[0]));
+            } else if (currentSort === 'recent') {
+                artistsWithMeta.sort((a, b) => b[2] - a[2]); // Newest first
+            }
+
+            artistsList.innerHTML = artistsWithMeta.map(([name, style, timestamp]) => `
                 <div class="artist-card" data-name="${name}">
                     <div class="artist-name">${name}</div>
                     <div class="artist-style">${style}</div>
@@ -685,6 +775,11 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        function sortArtists(sortType) {
+            currentSort = sortType;
+            displayArtists();
         }
 
         function filterArtists() {

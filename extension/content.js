@@ -82,7 +82,18 @@
     return null;
   }
 
-  // Replace artist names in text
+  // Normalize string by removing special characters and accents for comparison
+  function normalizeForComparison(str) {
+    return str
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove accents
+      .replace(/[''`]/g, '') // Remove apostrophes
+      .replace(/[^\w\s]/g, '') // Remove other special chars except word chars and spaces
+      .trim();
+  }
+
+  // Replace artist names in text (with fuzzy matching)
   function replaceArtistNames(text) {
     if (!artistsData || !artistsData.enabled || !artistsData.artists) {
       return { text: text, replacements: [] };
@@ -91,15 +102,53 @@
     let modifiedText = text;
     let replacements = [];
 
+    // Sort by length (longest first)
     const sortedArtists = Object.entries(artistsData.artists).sort((a, b) => b[0].length - a[0].length);
 
     for (const [artistName, style] of sortedArtists) {
-      const regex = new RegExp(`\\b${escapeRegex(artistName)}\\b`, 'gi');
+      const normalizedArtist = normalizeForComparison(artistName);
 
-      if (regex.test(modifiedText)) {
-        modifiedText = modifiedText.replace(regex, style);
-        replacements.push(artistName);
+      // Create regex that matches the artist name with or without special characters
+      // Split text into words and check each position
+      const words = modifiedText.split(/\b/);
+      let newWords = [];
+      let i = 0;
+
+      while (i < words.length) {
+        // Try to match starting from this position
+        let matched = false;
+        let matchLength = 0;
+
+        // Try matching multiple words (for multi-word artist names)
+        const artistWords = artistName.split(/\s+/);
+        let candidateText = '';
+        let candidateLength = 0;
+
+        for (let j = 0; j < artistWords.length * 2 + 1 && i + j < words.length; j++) {
+          candidateText += words[i + j];
+          candidateLength++;
+
+          const normalizedCandidate = normalizeForComparison(candidateText);
+
+          if (normalizedCandidate === normalizedArtist) {
+            // Found a match!
+            matched = true;
+            matchLength = candidateLength;
+            break;
+          }
+        }
+
+        if (matched) {
+          newWords.push(style);
+          i += matchLength;
+          replacements.push(artistName);
+        } else {
+          newWords.push(words[i]);
+          i++;
+        }
       }
+
+      modifiedText = newWords.join('');
     }
 
     return { text: modifiedText, replacements };
