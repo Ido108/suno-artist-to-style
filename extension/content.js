@@ -11,6 +11,7 @@
 
   let artistsData = null;
   let replaceButton = null;
+  let autoReplaceEnabled = true; // Auto-replace on Create button click
 
   // Fetch artists data from API
   async function fetchArtistsData() {
@@ -209,6 +210,116 @@
     }
   }
 
+  // Find and monitor the Create button
+  function findCreateButton() {
+    const selectors = [
+      'button[aria-label*="Create"]',
+      'button:has(svg) span:contains("Create")',
+      'button.btn-primary:contains("Create")',
+      'button[type="button"]'
+    ];
+
+    // Try to find the create button
+    const buttons = document.querySelectorAll('button');
+    for (const button of buttons) {
+      const text = button.textContent || button.getAttribute('aria-label') || '';
+      if (text.toLowerCase().includes('create') && !button.dataset.sunoCreateMonitored) {
+        return button;
+      }
+    }
+
+    return null;
+  }
+
+  // Handle Create button click
+  function handleCreateClick(e) {
+    if (!autoReplaceEnabled) {
+      return;
+    }
+
+    const textarea = findStylesTextarea();
+    if (!textarea) {
+      return;
+    }
+
+    const originalValue = textarea.value;
+    const result = replaceArtistNames(originalValue);
+
+    if (result.replacements.length > 0) {
+      // Replace the text
+      textarea.value = result.text;
+
+      // Trigger input event
+      const event = new Event('input', { bubbles: true });
+      textarea.dispatchEvent(event);
+
+      console.log('[Suno Extension] Auto-replaced on Create:', result.replacements);
+
+      // Show notification
+      showNotification(`✅ Replaced ${result.replacements.length} artist${result.replacements.length > 1 ? 's' : ''}!`);
+    }
+  }
+
+  // Show temporary notification
+  function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.textContent = message;
+
+    Object.assign(notification.style, {
+      position: 'fixed',
+      top: '20px',
+      right: '20px',
+      background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+      color: 'white',
+      padding: '15px 25px',
+      borderRadius: '8px',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+      zIndex: '999999',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      fontSize: '14px',
+      fontWeight: '600',
+      animation: 'slideIn 0.3s ease'
+    });
+
+    // Add animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      notification.style.transform = 'translateX(400px)';
+      setTimeout(() => notification.remove(), 300);
+    }, 2000);
+  }
+
+  // Monitor Create button
+  function monitorCreateButton() {
+    const createButton = findCreateButton();
+
+    if (!createButton) {
+      return;
+    }
+
+    if (createButton.dataset.sunoCreateMonitored) {
+      return;
+    }
+
+    createButton.dataset.sunoCreateMonitored = 'true';
+
+    // Add click listener
+    createButton.addEventListener('click', handleCreateClick);
+
+    console.log('[Suno Extension] Monitoring Create button for auto-replace');
+  }
+
   // Monitor for textarea and add button
   function monitorTextarea() {
     const textarea = findStylesTextarea();
@@ -235,6 +346,16 @@
   async function init() {
     console.log('[Suno Extension] Initializing...');
 
+    // Load auto-replace setting from storage
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      const stored = await chrome.storage.local.get(['autoReplaceEnabled']);
+      if (stored.autoReplaceEnabled !== undefined) {
+        autoReplaceEnabled = stored.autoReplaceEnabled;
+      }
+    }
+
+    console.log('[Suno Extension] Auto-replace on Create:', autoReplaceEnabled);
+
     // Load artists data
     artistsData = await fetchArtistsData();
 
@@ -244,8 +365,13 @@
     }
 
     // Start monitoring
-    setInterval(monitorTextarea, CONFIG.CHECK_INTERVAL);
+    setInterval(() => {
+      monitorTextarea();
+      monitorCreateButton();
+    }, CONFIG.CHECK_INTERVAL);
+
     monitorTextarea(); // Initial check
+    monitorCreateButton(); // Initial check
   }
 
   // Wait for page to be ready

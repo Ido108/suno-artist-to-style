@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 
   // Load saved settings
-  const stored = await chrome.storage.local.get(['apiUrl', 'llmProvider', 'apiKey_google', 'apiKey_anthropic', 'apiKey_openai']);
+  const stored = await chrome.storage.local.get(['apiUrl', 'llmProvider', 'apiKey_google', 'apiKey_anthropic', 'apiKey_openai', 'autoReplaceEnabled']);
 
   if (stored.apiUrl) {
     apiUrlInput.value = stored.apiUrl;
@@ -25,6 +25,14 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   if (stored.llmProvider) {
     llmProviderSelect.value = stored.llmProvider;
+  }
+
+  // Load auto-replace setting
+  const autoReplaceCheckbox = document.getElementById('autoReplaceEnabled');
+  if (stored.autoReplaceEnabled !== undefined) {
+    autoReplaceCheckbox.checked = stored.autoReplaceEnabled;
+  } else {
+    autoReplaceCheckbox.checked = true; // Default to enabled
   }
 
   // Load API key based on selected provider
@@ -93,10 +101,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 
       // Save to storage
       const provider = getProviderName(llmProvider);
+      const autoReplaceEnabled = document.getElementById('autoReplaceEnabled').checked;
+
       await chrome.storage.local.set({
         apiUrl: apiUrl,
         llmProvider: llmProvider,
         [`apiKey_${provider}`]: apiKey,
+        autoReplaceEnabled: autoReplaceEnabled,
         artistsCache: {
           data: data,
           timestamp: Date.now()
