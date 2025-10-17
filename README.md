@@ -1,24 +1,25 @@
 # 🎵 Suno Artist Style Replacer
 
-אקסטנשן לסונו שמחליף אוטומטית שמות של אמנים בתיאור מפורט של הסטייל המוזיקלי שלהם, עם ממשק ניהול מלא.
+Auto-replace artist names with detailed style descriptions in Suno AI, with full admin panel and AI generator.
 
-## ✨ תכונות
+## ✨ Features
 
-- 🔄 **החלפה אוטומטית** - מחליף שמות אמנים בסטייל המפורט שלהם בזמן אמת
-- 🎨 **ממשק ניהול** - דף ניהול נוח להוספה, עריכה ומחיקה של אמנים
-- 🌐 **Backend API** - שרת Node.js שניתן לפרוס ב-Railway
-- 🔌 **שני אופני שימוש**:
-  - Chrome Extension (המלצה)
+- 🔄 **Manual Replacement** - Button to replace artist names with detailed styles
+- 🎨 **Admin Panel** - Easy-to-use interface for managing artists
+- 🌐 **Backend API** - Node.js server deployable on Railway
+- 🤖 **AI Generator** - Auto-generate style descriptions using Gemini/Claude/GPT
+- 🔌 **Two Modes**:
+  - Chrome Extension (Recommended)
   - Userscript (Tampermonkey/Greasemonkey)
 
-## 📁 מבנה הפרויקט
+## 📁 Project Structure
 
 ```
 suno-extension/
 ├── server/              # Backend API
 │   └── index.js        # Express server
 ├── public/             # Admin panel
-│   └── admin.html      # דף ניהול
+│   └── admin.html      # Management interface
 ├── extension/          # Chrome Extension
 │   ├── manifest.json
 │   ├── content.js
@@ -28,114 +29,115 @@ suno-extension/
 │   └── options.js
 ├── userscript/         # Userscript version
 │   └── suno-artist-replacer.user.js
-├── artist_styles.json  # מאגר האמנים
+├── artist_styles.json  # Artist database
 ├── package.json
-├── railway.json        # Railway config
-└── README.md
+└── railway.json        # Railway config
 ```
 
-## 🚀 התקנה והפעלה
+## 🚀 Quick Start
 
-### שלב 1: הכנת הפרויקט
+### 1. Install Dependencies
 
 ```bash
-cd suno-extension
 npm install
 ```
 
-### שלב 2: פריסה ב-Railway
+### 2. Configure
 
-1. **צור חשבון ב-Railway**
-   - גש ל-[Railway.app](https://railway.app)
-   - התחבר עם GitHub
+Edit `.env`:
+```env
+PORT=3000
+ADMIN_PASSWORD=your_password_here
+```
 
-2. **צור פרויקט חדש**
-   - לחץ על "New Project"
-   - בחר "Deploy from GitHub repo"
-   - בחר את הריפו שלך
+### 3. Run
 
-3. **הגדר משתני סביבה**
-   - לחץ על ה-Service שנוצר
-   - עבור ל-"Variables"
-   - הוסף:
-     ```
-     PORT=3000
-     NODE_ENV=production
-     ADMIN_PASSWORD=your_secure_password_here
-     ```
+```bash
+npm start
+# Access at http://localhost:3000
+```
 
-4. **פרוס**
-   - Railway יפרוס אוטומטית
-   - העתק את ה-URL שמתקבל (לדוגמה: `https://your-app.up.railway.app`)
+## 🌐 Deploy to Railway
 
-### שלב 3: התקנת האקסטנשן
+1. **Create Railway Account**: [Railway.app](https://railway.app)
+2. **Connect GitHub**: Deploy from `https://github.com/Ido108/suno-artist-to-style`
+3. **Add Variables**:
+   ```
+   PORT=3000
+   ADMIN_PASSWORD=your_secure_password
+   ```
+4. **Deploy**: Railway auto-deploys to `suno.up.railway.app`
 
-#### אופציה 1: Chrome Extension (מומלץ)
+## 🔌 Install Extension
 
-1. פתח Chrome/Edge וגש ל-`chrome://extensions/`
-2. הפעל "Developer mode" (למעלה מימין)
-3. לחץ על "Load unpacked"
-4. בחר את התיקייה `extension/`
-5. האקסטנשן יופיע ברשימת ההרחבות
+### Chrome Extension
 
-6. **הגדרת האקסטנשן**:
-   - לחץ על אייקון האקסטנשן
-   - לחץ על "⚙️ הגדרות"
-   - הדבק את ה-URL מ-Railway
-   - לחץ "💾 שמור הגדרות"
+1. Go to `chrome://extensions/`
+2. Enable "Developer mode"
+3. Drag and drop `suno-extension.zip`
+   OR
+   Click "Load unpacked" → Select `extension/` folder
 
-#### אופציה 2: Userscript
+### Configure Extension
 
-1. התקן [Tampermonkey](https://www.tampermonkey.net/) או [Greasemonkey](https://www.greasespot.net/)
-2. לחץ על אייקון Tampermonkey
-3. בחר "Create a new script"
-4. העתק את התוכן מ-`userscript/suno-artist-replacer.user.js`
-5. שמור (Ctrl+S)
+1. Click extension icon
+2. Click "⚙️ Settings"
+3. API URL: `https://suno.up.railway.app`
+4. Select AI Model (e.g., Gemini 2.0 Flash)
+5. Enter API Key
+6. Save
 
-6. **הגדרת ה-API URL**:
-   - פתח קונסול ב-Suno (F12)
-   - הרץ:
-     ```javascript
-     GM_setValue('apiUrl', 'https://your-railway-app.up.railway.app')
-     ```
+## 🎯 Usage
 
-## 🎯 שימוש
+### Admin Panel
 
-### ניהול אמנים
+1. **Go to**: `https://suno.up.railway.app`
+2. **Enter password**
+3. **Add Artist**:
+   - Select AI model
+   - Enter API key (saved in browser)
+   - Enter artist name: "Radiohead"
+   - Click "🤖 AI Generator"
+   - AI generates detailed style
+   - Save!
 
-1. **גש לדף הניהול**:
-   - URL: `https://your-railway-app.up.railway.app`
-   - או: לחץ על האקסטנשן ובחר "📊 דף ניהול"
+### In Suno
 
-2. **הוסף אמן חדש**:
-   - הזן סיסמת ניהול
-   - הזן שם האמן (לדוגמה: "Billy Joel")
-   - הזן תיאור הסטייל: "Pop, Rock, Storytelling, piano-driven, male vocals"
-   - לחץ "💾 שמור/עדכן אמן"
+1. Go to [Suno](https://app.suno.ai/)
+2. Click "Create" → "Styles"
+3. Type artist name: "Billy Joel"
+4. Click "🎨 Replace with Style" button
+5. Name replaced with detailed style!
 
-3. **ערוך אמן קיים**:
-   - חפש את האמן ברשימה
-   - לחץ "✏️ ערוך"
-   - שנה את הסטייל
-   - לחץ "💾 שמור/עדכן אמן"
+## 🤖 AI Models
 
-4. **מחק אמן**:
-   - חפש את האמן ברשימה
-   - לחץ "🗑️ מחק"
-   - אשר את המחיקה
+### Google Gemini (Recommended! 🌟)
+- **Gemini 2.5 Flash** - Newest, fast
+- **Gemini 2.0 Flash** - ⭐ Default, free tier
+- **Gemini 1.5 Pro** - Advanced
+- **Get API Key**: [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
 
-### שימוש ב-Suno
+**Why Gemini?**
+- ✅ **Free tier** - 15 requests/min free!
+- ✅ Fast
+- ✅ Good for music
 
-1. גש ל-[Suno](https://app.suno.ai/)
-2. לחץ על "Create" או "Cover"
-3. בשדה "Styles", התחל להקליד שם של אמן:
-   - הקלד: "Billy Joel"
-   - האקסטנשן יחליף אוטומטית ל: "Pop, Rock, Storytelling, piano-driven, male vocals"
+### Anthropic Claude
+- **Claude 4.5 Sonnet** - Newest
+- **Claude 3.5 Sonnet** - Reliable
+- **Claude 3.5 Haiku** - Fast & cheap
+- **Get API Key**: [console.anthropic.com](https://console.anthropic.com/)
 
-## 🔧 API Endpoints
+### OpenAI
+- **GPT-5 Chat Latest** - Newest
+- **GPT-4o** - Optimized
+- **GPT-4.1-mini** - Balanced
+- **Get API Key**: [platform.openai.com](https://platform.openai.com/api-keys)
+
+## 📝 API Endpoints
 
 ### GET `/api/artists`
-מחזיר את כל האמנים במאגר.
+Get all artists.
 
 **Response:**
 ```json
@@ -148,94 +150,128 @@ npm install
 }
 ```
 
-### GET `/api/artists/:name`
-מחזיר אמן ספציפי.
+### POST `/api/generate-style`
+Generate artist style with AI.
+
+**Body:**
+```json
+{
+  "artistName": "Artist Name",
+  "password": "admin_password",
+  "llmProvider": "gemini-2.0-flash",
+  "apiKey": "your_api_key"
+}
+```
 
 ### POST `/api/artists`
-מוסיף או מעדכן אמן.
+Add/update artist.
 
 **Body:**
 ```json
 {
   "name": "Artist Name",
   "style": "Genre, Style, Description",
-  "password": "your_admin_password"
+  "password": "admin_password"
 }
 ```
 
 ### DELETE `/api/artists/:name`
-מוחק אמן.
+Delete artist (requires password).
 
-**Body:**
-```json
-{
-  "password": "your_admin_password"
-}
+## 🔒 Security
+
+### API Key Storage
+
+**3 Methods:**
+
+1. **Browser localStorage** (Extension):
+   - ✅ Convenient
+   - ✅ Secure - only on your device
+   - 💡 **Recommended for personal use**
+
+2. **File system** (`api_keys/`):
+   - Files: `api_keys/google_api_key.txt`
+   - ✅ Good for development
+   - ⚠️ Don't commit to Git!
+
+3. **Environment variables**:
+   - Railway Variables or `.env`
+   - ✅ Most secure
+   - 💡 **Recommended for production**
+
+## 💰 Costs (per artist)
+
+| Provider | Model | Cost | Notes |
+|---------|-------|------|-------|
+| Google | Gemini 2.0 Flash | **FREE!** | 15/min free tier |
+| Google | Gemini 1.5 Pro | ~$0.001 | More advanced |
+| Anthropic | Claude 3.5 Haiku | ~$0.001 | Fast & cheap |
+| Anthropic | Claude 4.5 Sonnet | ~$0.003 | Newest |
+| OpenAI | GPT-4o | ~$0.002 | Fast |
+| OpenAI | GPT-4.1-mini | ~$0.0005 | Balanced |
+
+**Recommendation**: Start with **Gemini 2.0 Flash** - free and good! 🌟
+
+## 🛠️ Development
+
+```bash
+# Install
+npm install
+
+# Run dev server
+npm run dev
+
+# Test API
+npm test
+
+# Backup database
+npm run backup
 ```
 
-### POST `/api/toggle`
-מפעיל/מכבה את המערכת.
+## 📦 Files
 
-**Body:**
-```json
-{
-  "password": "your_admin_password"
-}
-```
+- **Backend**: `server/index.js` - Express API with AI integration
+- **Admin**: `public/admin.html` - Management interface
+- **Extension**: `extension/` - Chrome extension source
+- **Database**: `artist_styles.json` - Artists database (hundreds included!)
+- **Userscript**: `userscript/` - Tampermonkey version
+- **ZIP**: `suno-extension.zip` - Ready-to-install extension
 
-## 📝 עריכת המאגר ידנית
+## 🐛 Troubleshooting
 
-אם תרצה לערוך את `artist_styles.json` ישירות:
+### Button doesn't appear in Suno
 
-```json
-{
-  "enabled": true,
-  "artists": {
-    "Artist Name": "Detailed style description",
-    "Another Artist": "Another style description"
-  }
-}
-```
+1. Refresh Suno (F5)
+2. Open Console (F12) - Look for: "[Suno Extension] Replace button created"
+3. If missing - reload extension: `chrome://extensions/`
 
-## 🔒 אבטחה
+### "No API key available"
 
-- כל פעולות הניהול דורשות סיסמה
-- הסיסמה נשמרת במשתנה סביבה `ADMIN_PASSWORD`
-- **חובה לשנות את הסיסמה לאחר ההתקנה!**
+**Solutions:**
+1. Enter API key in admin panel
+2. Check "Save in browser"
+3. Or add to Railway variables: `GEMINI_API_KEY=your_key`
 
-## 🐛 פתרון בעיות
+### AI doesn't generate well
 
-### האקסטנשן לא עובד
+- Try different model (Claude 4.5 Sonnet is excellent!)
+- Edit results manually
+- Add specific details
 
-1. ודא שה-API URL נכון בהגדרות
-2. בדוק שהשרת ב-Railway פועל
-3. פתח Developer Tools (F12) ובדוק אם יש שגיאות
-4. רענן את המאגר מתוך popup האקסטנשן
-
-### השרת לא עובד
-
-1. בדוק את הלוגים ב-Railway
-2. ודא שמשתני הסביבה מוגדרים נכון
-3. בדוק שהקובץ `artist_styles.json` קיים
-
-### החלפה לא מתבצעת
-
-1. ודא שהאמן קיים במאגר (אותיות גדולות/קטנות חשובות!)
-2. בדוק שהמערכת מופעלת (toggle ב-admin panel)
-3. נסה לרענן את הדף
-
-## 📜 רישיון
+## 📜 License
 
 MIT License
 
-## 🤝 תרומה
+## 🤝 Contributing
 
-רוצה לתרום? פתח Issue או Pull Request!
+Issues and PRs welcome!
 
-## 📞 תמיכה
+## 🔗 Links
 
-יש בעיה? פתח Issue ב-GitHub.
+- **GitHub**: https://github.com/Ido108/suno-artist-to-style
+- **Railway**: Deploy at [railway.app](https://railway.app)
+- **Suno**: Use at [suno.ai](https://app.suno.ai/)
 
 ---
 
-**נוצר עם ❤️ למוזיקאים ויוצרי Suno**
+**Made for Suno musicians and creators ❤️**
