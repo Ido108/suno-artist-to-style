@@ -245,6 +245,31 @@ app.get('/api/artists', async (req, res) => {
   }
 });
 
+// Public endpoint for syncing data between apps (read-only, no auth required)
+// Returns the raw artist_styles.json file with proper CORS headers
+app.get('/api/sync/artist_styles', async (req, res) => {
+  try {
+    const data = await readArtists();
+
+    // Set cache control headers to allow clients to cache for a short time
+    res.set('Cache-Control', 'public, max-age=60'); // Cache for 1 minute
+    res.set('Last-Modified', new Date().toUTCString());
+
+    // Return the full data
+    res.json({
+      success: true,
+      lastUpdated: new Date().toISOString(),
+      data: data
+    });
+  } catch (error) {
+    console.error('Error in sync endpoint:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch data'
+    });
+  }
+});
+
 // Get single artist
 app.get('/api/artists/:name', async (req, res) => {
   try {
