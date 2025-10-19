@@ -344,6 +344,84 @@ app.post('/api/toggle', async (req, res) => {
   }
 });
 
+// Contribute endpoint - allows users to submit new artists
+app.post('/api/contribute', async (req, res) => {
+  try {
+    const { artist, style } = req.body;
+
+    if (!artist || !style) {
+      return res.status(400).json({ error: 'Artist name and style are required' });
+    }
+
+    // Read current data
+    const data = await readArtists();
+
+    // Check if artist already exists
+    if (data.artists[artist]) {
+      return res.status(409).json({ error: 'Artist already exists in database' });
+    }
+
+    // Add the new artist
+    data.artists[artist] = style;
+
+    // Save to file
+    const success = await writeArtists(data);
+
+    if (success) {
+      console.log(`[Contribute] New artist added: ${artist}`);
+      res.json({
+        success: true,
+        message: 'Thank you for contributing!',
+        artist,
+        style
+      });
+    } else {
+      res.status(500).json({ error: 'Failed to save artist' });
+    }
+
+  } catch (error) {
+    console.error('[Contribute] Error:', error);
+    res.status(500).json({ error: 'Failed to submit artist' });
+  }
+});
+
+// Generate endpoint - for extension popup (simpler version)
+app.post('/api/generate', async (req, res) => {
+  try {
+    const { prompt, llmProvider, apiKey } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    if (!apiKey) {
+      return res.status(400).json({ error: 'API key is required' });
+    }
+
+    const provider = llmProvider || 'gemini-2.0-flash';
+
+    console.log(`[Generate] Processing request with ${provider}`);
+
+    const result = await callLLMAPI(provider, apiKey, prompt, 0.7, 500);
+
+    res.json({
+      success: true,
+      result: result.trim()
+    });
+
+  } catch (error) {
+    console.error('[Generate] Error:', error);
+    let errorMessage = error.message || 'Generation failed';
+
+    if (error.response) {
+      console.error('API Error Response:', error.response.data);
+      errorMessage = error.response.data?.error?.message || errorMessage;
+    }
+
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
 // AI Style Generator - Generate artist style description using LLM
 app.post('/api/generate-style', async (req, res) => {
   try {
