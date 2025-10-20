@@ -369,6 +369,156 @@
             color: #6c757d;
             margin-top: 5px;
         }
+
+        /* Progress Modal */
+        .progress-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .progress-modal.active {
+            display: flex;
+        }
+
+        .progress-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .progress-header {
+            margin-bottom: 20px;
+        }
+
+        .progress-header h2 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .progress-stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .progress-stat {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .stat-total { background: #e7f3ff; color: #004085; }
+        .stat-new { background: #d4edda; color: #155724; }
+        .stat-existing { background: #fff3cd; color: #856404; }
+        .stat-skip { background: #f8d7da; color: #721c24; }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+
+        .progress-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .progress-item {
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+            border-left: 4px solid transparent;
+        }
+
+        .progress-item.pending {
+            background: #f8f9fa;
+            border-left-color: #6c757d;
+        }
+
+        .progress-item.processing {
+            background: #e7f3ff;
+            border-left-color: #667eea;
+            animation: pulse 1.5s infinite;
+        }
+
+        .progress-item.success {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+
+        .progress-item.skipped {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .progress-item.failed {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .progress-item-icon {
+            font-size: 1.2em;
+            width: 25px;
+            text-align: center;
+        }
+
+        .progress-item-name {
+            flex: 1;
+            font-weight: 600;
+        }
+
+        .progress-item-status {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+
+        .progress-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -1340,6 +1490,92 @@
             console.log('Downloaded artist_styles.json');
         }
 
+        // Progress Modal Functions
+        function openProgressModal() {
+            document.getElementById('progressModal').classList.add('active');
+        }
+
+        function closeProgressModal() {
+            document.getElementById('progressModal').classList.remove('active');
+        }
+
+        function updateProgressStats(total, newCount, existingCount, skipCount) {
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statNew').textContent = newCount;
+            document.getElementById('statExisting').textContent = existingCount;
+            document.getElementById('statSkip').textContent = skipCount;
+        }
+
+        function updateProgressBar(current, total) {
+            const percentage = Math.round((current / total) * 100);
+            const bar = document.getElementById('progressBar');
+            bar.style.width = percentage + '%';
+            bar.textContent = `${current}/${total} (${percentage}%)`;
+        }
+
+        function addProgressItem(artistName, status = 'pending') {
+            const progressList = document.getElementById('progressList');
+            const item = document.createElement('div');
+            item.className = `progress-item ${status}`;
+            item.id = `progress-${artistName.replace(/\s+/g, '-')}`;
+
+            const icons = {
+                pending: '⏸️',
+                processing: '⏳',
+                success: '✅',
+                skipped: '⏭️',
+                failed: '❌'
+            };
+
+            const statusText = {
+                pending: 'Waiting...',
+                processing: 'Generating...',
+                success: 'Success',
+                skipped: 'Skipped',
+                failed: 'Failed'
+            };
+
+            item.innerHTML = `
+                <div class="progress-item-icon">${icons[status]}</div>
+                <div class="progress-item-name">${artistName}</div>
+                <div class="progress-item-status">${statusText[status]}</div>
+            `;
+
+            progressList.appendChild(item);
+        }
+
+        function updateProgressItem(artistName, status, statusMessage = null) {
+            const itemId = `progress-${artistName.replace(/\s+/g, '-')}`;
+            const item = document.getElementById(itemId);
+            if (!item) return;
+
+            const icons = {
+                pending: '⏸️',
+                processing: '⏳',
+                success: '✅',
+                skipped: '⏭️',
+                failed: '❌'
+            };
+
+            const statusText = statusMessage || {
+                pending: 'Waiting...',
+                processing: 'Generating...',
+                success: 'Success',
+                skipped: 'Skipped',
+                failed: 'Failed'
+            }[status];
+
+            item.className = `progress-item ${status}`;
+            item.innerHTML = `
+                <div class="progress-item-icon">${icons[status]}</div>
+                <div class="progress-item-name">${artistName}</div>
+                <div class="progress-item-status">${statusText}</div>
+            `;
+
+            // Auto-scroll to current item
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
         // AI Style Generator
         async function generateStyle() {
             const artistNameInput = document.getElementById('artistName').value.trim();
@@ -1378,7 +1614,7 @@
 
             // Show loading state
             generateBtn.disabled = true;
-            generateBtn.innerHTML = `⏳ טוען נתונים...`;
+            generateBtn.innerHTML = `⏳ מנתח נתונים...`;
 
             let successCount = 0;
             let failCount = 0;
@@ -1387,35 +1623,63 @@
             let newCount = 0;
 
             try {
-                // Load fresh artist data from server to check which artists already exist
+                // PHASE 1: Load fresh artist data and analyze
                 console.log('🔄 Loading fresh artist data from server...');
                 const artistsResponse = await fetch(`${API_URL}/api/artists`);
                 const currentArtistsData = await artistsResponse.json();
                 console.log(`📊 Loaded ${Object.keys(currentArtistsData.artists || {}).length} existing artists`);
                 console.log(`⚙️ Regenerate existing: ${regenerateExisting ? 'YES' : 'NO'}`);
 
-                // Update loading state
+                // PHASE 2: Pre-check all artists and categorize
+                let existingArtists = [];
+                let newArtists = [];
+                let willSkip = 0;
+
+                for (const artistName of artistNames) {
+                    const artistExists = currentArtistsData.artists && currentArtistsData.artists[artistName];
+                    if (artistExists) {
+                        existingArtists.push(artistName);
+                        if (!regenerateExisting) {
+                            willSkip++;
+                        }
+                    } else {
+                        newArtists.push(artistName);
+                    }
+                }
+
+                console.log(`📋 Analysis: ${newArtists.length} new, ${existingArtists.length} existing, ${willSkip} will skip`);
+
+                // PHASE 3: Open progress modal and show stats
+                document.getElementById('progressList').innerHTML = ''; // Clear previous items
+                openProgressModal();
+                updateProgressStats(artistNames.length, newArtists.length, existingArtists.length, willSkip);
+
+                // PHASE 4: Add all artists to progress list as pending
+                for (const artistName of artistNames) {
+                    addProgressItem(artistName, 'pending');
+                }
+
+                // PHASE 5: Process each artist
                 generateBtn.innerHTML = `⏳ מעבד ${artistNames.length} אמנים...`;
+                let processedCount = 0;
 
                 for (const artistName of artistNames) {
                     try {
                         // Check if artist already exists (case-sensitive exact match)
                         const artistExists = currentArtistsData.artists && currentArtistsData.artists[artistName];
 
-                        console.log(`🔍 Checking "${artistName}": ${artistExists ? 'EXISTS' : 'NEW'}`);
-
                         // Skip if exists and regenerateExisting is not checked
                         if (artistExists && !regenerateExisting) {
                             skippedCount++;
-                            console.log(`⏭️ "${artistName}": SKIPPED (already exists, regenerate is OFF)`);
+                            processedCount++;
+                            updateProgressItem(artistName, 'skipped', 'Already exists');
+                            updateProgressBar(processedCount, artistNames.length);
+                            console.log(`⏭️ "${artistName}": SKIPPED`);
                             continue;
                         }
 
-                        if (artistExists && regenerateExisting) {
-                            console.log(`🔄 "${artistName}": REGENERATING (already exists, regenerate is ON)`);
-                        } else {
-                            console.log(`✨ "${artistName}": CREATING NEW`);
-                        }
+                        // Update status to processing
+                        updateProgressItem(artistName, 'processing');
 
                         // Generate style for this artist
                         const response = await fetch(`${API_URL}/api/generate-style`, {
@@ -1447,26 +1711,42 @@
 
                             if (saveResponse.ok) {
                                 successCount++;
+                                processedCount++;
                                 if (artistExists) {
                                     regeneratedCount++;
+                                    updateProgressItem(artistName, 'success', 'Regenerated');
                                     console.log(`🔄 ${artistName}: regenerated`);
                                 } else {
                                     newCount++;
+                                    updateProgressItem(artistName, 'success', 'Created new');
                                     console.log(`✓ ${artistName}: created new`);
                                 }
+                                updateProgressBar(processedCount, artistNames.length);
                             } else {
                                 failCount++;
-                                console.error(`✗ ${artistName}: generated but failed to save`);
+                                processedCount++;
+                                updateProgressItem(artistName, 'failed', 'Save failed');
+                                updateProgressBar(processedCount, artistNames.length);
+                                console.error(`✗ ${artistName}: save failed`);
                             }
                         } else {
                             failCount++;
+                            processedCount++;
+                            updateProgressItem(artistName, 'failed', data.error || 'Generation failed');
+                            updateProgressBar(processedCount, artistNames.length);
                             console.error(`✗ ${artistName}: ${data.error}`);
                         }
                     } catch (error) {
                         failCount++;
+                        processedCount++;
+                        updateProgressItem(artistName, 'failed', error.message);
+                        updateProgressBar(processedCount, artistNames.length);
                         console.error(`✗ ${artistName}: ${error.message}`);
                     }
                 }
+
+                // PHASE 6: Complete - show close button
+                document.getElementById('closeProgressBtn').style.display = 'block';
 
                 // Clear the input fields
                 document.getElementById('artistName').value = '';
@@ -1484,19 +1764,14 @@
 
                 const resultMessage = resultParts.join(' | ');
 
-                // Show results
-                if (successCount > 0 || skippedCount > 0) {
-                    showAlert(`סיימתי! ${resultMessage}`, successCount > 0 ? 'success' : 'error');
-                } else {
-                    showAlert(`❌ כל ${failCount} האמנים נכשלו`, 'error');
-                }
+                console.log(`✅ COMPLETE! ${resultMessage}`);
 
-                // Success animation
+                // Success animation on button
                 if (successCount > 0) {
-                    generateBtn.innerHTML = `✅ הושלם: ${successCount} success | ${skippedCount} skipped`;
+                    generateBtn.innerHTML = `✅ הושלם: ${successCount} success`;
                     generateBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
                 } else if (skippedCount > 0) {
-                    generateBtn.innerHTML = `⏭️ ${skippedCount} אמנים נדלגו`;
+                    generateBtn.innerHTML = `⏭️ ${skippedCount} נדלגו`;
                     generateBtn.style.background = 'linear-gradient(135deg, #6c757d 0%, #5a6268 100%)';
                 } else {
                     generateBtn.innerHTML = `❌ ${failCount} נכשלו`;
@@ -1507,10 +1782,12 @@
                     generateBtn.innerHTML = originalText;
                     generateBtn.style.background = '';
                     generateBtn.disabled = false;
-                }, 4000);
+                }, 3000);
 
             } catch (error) {
+                console.error('❌ Critical error:', error);
                 showAlert('שגיאה כללית: ' + error.message, 'error');
+                closeProgressModal();
                 generateBtn.innerHTML = originalText;
                 generateBtn.disabled = false;
             }
@@ -1708,5 +1985,39 @@
             }
         }
     </script>
+
+    <!-- Progress Modal -->
+    <div id="progressModal" class="progress-modal">
+        <div class="progress-panel">
+            <div class="progress-header">
+                <h2>🤖 AI Generation Progress</h2>
+                <div class="progress-stats">
+                    <div class="progress-stat stat-total">
+                        Total: <span id="statTotal">0</span>
+                    </div>
+                    <div class="progress-stat stat-new">
+                        New: <span id="statNew">0</span>
+                    </div>
+                    <div class="progress-stat stat-existing">
+                        Existing: <span id="statExisting">0</span>
+                    </div>
+                    <div class="progress-stat stat-skip">
+                        Will Skip: <span id="statSkip">0</span>
+                    </div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar" style="width: 0%">0%</div>
+                </div>
+            </div>
+            <div class="progress-list" id="progressList">
+                <!-- Progress items will be added here dynamically -->
+            </div>
+            <div class="progress-footer">
+                <button class="btn btn-primary" id="closeProgressBtn" onclick="closeProgressModal()" style="display: none;">
+                    ✅ Close
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
