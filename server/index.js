@@ -51,7 +51,7 @@ if (process.env.RAILWAY_VOLUME_MOUNT_PATH && !fsSync.existsSync(ARTISTS_FILE)) {
       console.log('Copied artist_styles.json to volume');
     }
   } catch (error) {
-    console.error('Error copying to volume:', error);
+    console.error('Error copying to volume:', error.message);
   }
 }
 
@@ -102,7 +102,7 @@ async function readArtists() {
     const data = await fs.readFile(ARTISTS_FILE, 'utf-8');
     return JSON.parse(data);
   } catch (error) {
-    console.error('Error reading artists file:', error);
+    console.error('Error reading artists file:', error.message);
     return { enabled: true, artists: {} };
   }
 }
@@ -113,7 +113,7 @@ async function writeArtists(data) {
     await fs.writeFile(ARTISTS_FILE, JSON.stringify(data, null, 2), 'utf-8');
     return true;
   } catch (error) {
-    console.error('Error writing artists file:', error);
+    console.error('Error writing artists file:', error.message);
     return false;
   }
 }
@@ -266,12 +266,22 @@ async function callLLMAPI(provider, apiKey, prompt, temperature = 0.7, maxTokens
 
 // API Routes
 
-// Endpoint to save API key to file (for browser to call)
+// ⚠️ SECURITY NOTE FOR USERS:
+// This server NEVER saves or logs API keys from extension users!
+// - Extension users' API keys are stored ONLY in their browser (chrome.storage.local)
+// - API keys are sent with each request but used ONLY in-memory for the API call
+// - API keys are NEVER logged, saved to disk, or accessible to the admin
+// - The server acts as a pass-through proxy to Google/Anthropic/OpenAI/X.AI
+// - You can verify this in the open-source code
+// - The /save-api-key endpoint below is ONLY for admin use (requires admin password)
+
+// Admin-only endpoint to save API keys to file (NOT used by extension)
+// This is ONLY for the admin panel and requires admin password
 app.post('/save-api-key', async (req, res) => {
   try {
     const { provider, apiKey, password } = req.body;
 
-    // Simple password authentication
+    // Requires admin password - extensions don't use this
     if (password !== process.env.ADMIN_PASSWORD) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -283,12 +293,72 @@ app.post('/save-api-key', async (req, res) => {
     const apiKeyFile = getApiKeyFilePath(provider);
     fsSync.writeFileSync(apiKeyFile, apiKey, 'utf8');
 
-    console.log(`API key saved to file for ${provider}`);
+    console.log(`[Admin] API key saved to file for ${provider}`);
     res.json({ message: 'API key saved successfully' });
 
   } catch (error) {
-    console.error('Error saving API key:', error);
+    console.error('[Admin] Error saving API key:', error.message);
     res.status(500).json({ error: 'Failed to save API key' });
+  }
+});
+
+// Get system prompt for AI generation (without exposing full implementation details)
+// Returns the prompt template that extensions can use to call AI APIs directly
+app.get('/api/get-prompt', async (req, res) => {
+  try {
+    const { artistName } = req.query;
+
+    if (!artistName) {
+      return res.status(400).json({ error: 'Artist name is required' });
+    }
+
+    // Return the system prompt - extensions will use this to call AI APIs directly
+    // This way API keys NEVER pass through our server!
+    const systemPrompt = `You are an expert music analyst and Suno AI style descriptor. Your job is to analyze artists and create detailed, accurate style descriptions for music generation.
+
+CRITICAL INSTRUCTIONS:
+1. Create a comma-separated description that captures the EXACT musical characteristics
+2. Focus on: Genre, Sub-genre, Tempo feel, Instrumentation, Vocal style, Mood, Production style
+3. Be SPECIFIC and DETAILED - avoid generic terms
+4. Include technical music terms when relevant
+5. Keep it concise but comprehensive (aim for 8-15 descriptive elements)
+6. Do NOT include the artist name in the output
+7. Do NOT use phrases like "in the style of" or "similar to"
+8. Output ONLY the comma-separated style description, no quotes, no explanations
+9. This can be used for a single artist or as part of processing multiple artists in a prompt
+
+FORMAT RULES:
+- Comma-separated list
+- Start with main genre(s)
+- Include specific instruments
+- Describe vocal characteristics (if applicable)
+- Add mood/feeling descriptors
+- Include tempo indicators (e.g., upbeat, slow, moderate)
+- Mention production style (e.g., polished, raw, lo-fi, orchestral)
+
+EXAMPLES OF GOOD OUTPUT:
+Pop Rock, Piano-driven, Storytelling lyrics, Upbeat, Male vocals, 80s production, Melodic, Catchy hooks, Anthemic choruses
+Soul, Emotional, Torch-Lounge, Powerful female vocals, Gospel influences, R&B elements, Melancholic, Piano and strings
+Alternative Rock, Grunge, Dark, Melodic, Heavy guitar riffs, Baritone male vocals, 90s Seattle sound, Introspective
+EDM, Melodic, Euphoric, Build-ups and drops, Synth-heavy, Festival anthems, Emotional vocal samples, Progressive house
+
+EXAMPLES OF BAD OUTPUT:
+Like Billy Joel ❌
+Similar to Adele's style ❌
+Pop music ❌ (too vague)
+Great artist with amazing voice ❌ (not descriptive)
+
+MAKE SURE IT PERFECTLY REPRESENT THE PROVIDED ARTIST/BAND/COMPOSER WITH NO IRRELEVANT INFO THAT IS NOT PERFECTLY MATCHES THE SPECIFIC DETAILED STYLE.
+
+Artist: ${artistName}
+
+Generate ONLY the detailed, comma-separated style description:`;
+
+    res.json({ prompt: systemPrompt });
+
+  } catch (error) {
+    console.error('[Get Prompt] Error:', error.message);
+    res.status(500).json({ error: 'Failed to generate prompt' });
   }
 });
 
@@ -319,7 +389,7 @@ app.get('/api/sync/artist_styles', async (req, res) => {
       data: data
     });
   } catch (error) {
-    console.error('Error in sync endpoint:', error);
+    console.error('[Sync] Error:', error.message);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch data'
@@ -505,7 +575,7 @@ app.post('/api/contribute', async (req, res) => {
     }
 
   } catch (error) {
-    console.error('[Contribute] Error:', error);
+    console.error('[Contribute] Error:', error.message);
     res.status(500).json({ error: 'Failed to submit artist' });
   }
 });
@@ -525,8 +595,9 @@ app.post('/api/generate', async (req, res) => {
 
     const provider = llmProvider || 'gemini-2.0-flash';
 
-    console.log(`[Generate] Processing request with ${provider}`);
+    console.log(`[Generate] Processing request with ${provider} (API key provided by user)`);
 
+    // SECURITY: API key is used here but NEVER logged or saved
     const result = await callLLMAPI(provider, apiKey, prompt, 0.7, 500);
 
     res.json({
@@ -535,12 +606,13 @@ app.post('/api/generate', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[Generate] Error:', error);
+    console.error('[Generate] Error:', error.message || 'Generation failed');
     let errorMessage = error.message || 'Generation failed';
     let detailedError = null;
 
     if (error.response) {
-      console.error('API Error Response:', error.response.data);
+      // SECURITY: Don't log full response.data as it may contain sensitive info
+      console.error(`[Generate] API Error: Status ${error.response.status}`);
       const apiError = error.response.data;
 
       // Google Gemini errors
@@ -553,7 +625,7 @@ app.post('/api/generate', async (req, res) => {
       }
       // OpenAI errors
       else if (apiError.error) {
-        errorMessage = apiError.error.message || JSON.stringify(apiError.error);
+        errorMessage = apiError.error.message || 'API error';
       }
 
       // Add status code if available
@@ -563,8 +635,8 @@ app.post('/api/generate', async (req, res) => {
     }
 
     res.status(500).json({
-      error: detailedError || errorMessage,
-      details: error.response?.data || null
+      error: detailedError || errorMessage
+      // SECURITY: Don't send full error.response.data to client
     });
   }
 });
@@ -594,7 +666,7 @@ app.post('/api/generate-style', async (req, res) => {
       });
     }
 
-    console.log(`Using API key provided in request for ${llmProvider}`);
+    console.log(`[Generate-Style] Processing request for ${artistName} using ${llmProvider}`);
 
     // Detailed prompt for generating artist style
     const systemPrompt = `You are an expert music analyst and Suno AI style descriptor. Your job is to analyze artists and create detailed, accurate style descriptions for music generation.
@@ -654,12 +726,13 @@ Generate ONLY the detailed, comma-separated style description:`;
       });
 
     } catch (error) {
-      console.error('[AI Generator] Error:', error);
+      console.error('[AI Generator] Error:', error.message || 'Failed to generate style');
       let errorMessage = error.message || 'Failed to generate style';
       let detailedError = null;
 
       if (error.response) {
-        console.error('API Error Response:', error.response.data);
+        // SECURITY: Don't log full response.data as it may contain sensitive info
+        console.error(`[AI Generator] API Error: Status ${error.response.status}`);
         const apiError = error.response.data;
 
         // Google Gemini errors
@@ -672,23 +745,23 @@ Generate ONLY the detailed, comma-separated style description:`;
         }
         // OpenAI errors
         else if (apiError.error) {
-          errorMessage = apiError.error.message || JSON.stringify(apiError.error);
+          errorMessage = apiError.error.message || 'API error';
         }
 
-        // Add status code and response details
+        // Add status code
         if (error.response.status) {
           detailedError = `[${error.response.status}] ${errorMessage}`;
         }
       }
 
       res.status(500).json({
-        error: detailedError || errorMessage,
-        details: error.response?.data || null
+        error: detailedError || errorMessage
+        // SECURITY: Don't send full error.response.data
       });
     }
 
   } catch (error) {
-    console.error('[AI Generator] Error:', error);
+    console.error('[AI Generator] Error:', error.message || 'Failed to generate style');
     res.status(500).json({ error: error.message || 'Failed to generate style' });
   }
 });
@@ -742,7 +815,7 @@ app.post('/api/json/upload', async (req, res) => {
       res.status(500).json({ error: 'Failed to write JSON' });
     }
   } catch (error) {
-    console.error('[JSON Upload] Error:', error);
+    console.error('[JSON Upload] Error:', error.message);
     res.status(500).json({ error: 'Failed to upload JSON' });
   }
 });
@@ -784,7 +857,7 @@ app.post('/api/json/clear', async (req, res) => {
       res.status(500).json({ error: 'Failed to clear artists' });
     }
   } catch (error) {
-    console.error('[JSON Clear] Error:', error);
+    console.error('[JSON Clear] Error:', error.message);
     res.status(500).json({ error: 'Failed to clear artists' });
   }
 });
