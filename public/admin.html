@@ -473,11 +473,17 @@
 
             <div class="form-group">
                 <label for="artistName">שם האמן:</label>
-                <div style="display: flex; gap: 10px;">
+                <div style="display: flex; gap: 10px; align-items: center;">
                     <input type="text" id="artistName" placeholder="לדוגמה: Billy Joel" style="flex: 1;">
                     <button class="btn btn-ai" onclick="generateStyle()" id="generateBtn" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; white-space: nowrap;">
                         🤖 AI Generator
                     </button>
+                </div>
+                <div class="form-check" style="margin-top: 8px;">
+                    <input type="checkbox" id="regenerateExisting" checked>
+                    <label for="regenerateExisting" style="font-weight: 400; font-size: 0.9em; color: #6c757d;">
+                        🔄 Regenerate existing artists? (אם לא מסומן, ידלג על אמנים קיימים)
+                    </label>
                 </div>
             </div>
 
@@ -1367,16 +1373,32 @@
                 return;
             }
 
+            // Check regenerate existing checkbox
+            const regenerateExisting = document.getElementById('regenerateExisting').checked;
+
             // Show loading state
             generateBtn.disabled = true;
-            generateBtn.innerHTML = `⏳ מייצר ${artistNames.length} אמנים...`;
+            generateBtn.innerHTML = `⏳ מעבד ${artistNames.length} אמנים...`;
 
             let successCount = 0;
             let failCount = 0;
+            let skippedCount = 0;
+            let regeneratedCount = 0;
+            let newCount = 0;
 
             try {
                 for (const artistName of artistNames) {
                     try {
+                        // Check if artist already exists
+                        const artistExists = artistsData.artists && artistsData.artists[artistName];
+
+                        // Skip if exists and regenerateExisting is not checked
+                        if (artistExists && !regenerateExisting) {
+                            skippedCount++;
+                            console.log(`⏭️ ${artistName}: skipped (already exists)`);
+                            continue;
+                        }
+
                         // Generate style for this artist
                         const response = await fetch(`${API_URL}/api/generate-style`, {
                             method: 'POST',
@@ -1407,7 +1429,13 @@
 
                             if (saveResponse.ok) {
                                 successCount++;
-                                console.log(`✓ ${artistName}: generated and saved`);
+                                if (artistExists) {
+                                    regeneratedCount++;
+                                    console.log(`🔄 ${artistName}: regenerated`);
+                                } else {
+                                    newCount++;
+                                    console.log(`✓ ${artistName}: created new`);
+                                }
                             } else {
                                 failCount++;
                                 console.error(`✗ ${artistName}: generated but failed to save`);
@@ -1429,22 +1457,39 @@
                 // Reload artists list
                 loadArtists();
 
+                // Build detailed result message
+                let resultParts = [];
+                if (newCount > 0) resultParts.push(`✨ ${newCount} חדשים`);
+                if (regeneratedCount > 0) resultParts.push(`🔄 ${regeneratedCount} regenerated`);
+                if (skippedCount > 0) resultParts.push(`⏭️ ${skippedCount} נדלגו`);
+                if (failCount > 0) resultParts.push(`❌ ${failCount} נכשלו`);
+
+                const resultMessage = resultParts.join(' | ');
+
                 // Show results
-                if (successCount > 0) {
-                    showAlert(`✨ ${successCount} אמנים נוצרו ונשמרו בהצלחה!${failCount > 0 ? ` (${failCount} נכשלו)` : ''}`, 'success');
+                if (successCount > 0 || skippedCount > 0) {
+                    showAlert(`סיימתי! ${resultMessage}`, successCount > 0 ? 'success' : 'error');
                 } else {
                     showAlert(`❌ כל ${failCount} האמנים נכשלו`, 'error');
                 }
 
                 // Success animation
-                generateBtn.innerHTML = `✅ ${successCount}/${artistNames.length} נוצרו!`;
-                generateBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                if (successCount > 0) {
+                    generateBtn.innerHTML = `✅ הושלם: ${successCount} success | ${skippedCount} skipped`;
+                    generateBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                } else if (skippedCount > 0) {
+                    generateBtn.innerHTML = `⏭️ ${skippedCount} אמנים נדלגו`;
+                    generateBtn.style.background = 'linear-gradient(135deg, #6c757d 0%, #5a6268 100%)';
+                } else {
+                    generateBtn.innerHTML = `❌ ${failCount} נכשלו`;
+                    generateBtn.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+                }
 
                 setTimeout(() => {
                     generateBtn.innerHTML = originalText;
                     generateBtn.style.background = '';
                     generateBtn.disabled = false;
-                }, 3000);
+                }, 4000);
 
             } catch (error) {
                 showAlert('שגיאה כללית: ' + error.message, 'error');
