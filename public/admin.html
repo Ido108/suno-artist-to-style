@@ -461,10 +461,22 @@
             margin-bottom: 8px;
             border-radius: 8px;
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 10px;
             font-size: 0.9em;
             border-left: 4px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .progress-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .progress-item-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .progress-item.pending {
@@ -1386,10 +1398,6 @@
                 return;
             }
 
-            if (!confirm(`Regenerate style for "${name}" using AI?`)) {
-                return;
-            }
-
             // Find the artist card to show loading state
             const cards = document.querySelectorAll('.artist-card');
             let targetCard = null;
@@ -1556,6 +1564,7 @@
             const item = document.createElement('div');
             item.className = `progress-item ${status}`;
             item.id = `progress-${artistName.replace(/\s+/g, '-')}`;
+            item.style.cursor = 'pointer';
 
             const icons = {
                 pending: '⏸️',
@@ -1574,15 +1583,26 @@
             };
 
             item.innerHTML = `
-                <div class="progress-item-icon">${icons[status]}</div>
-                <div class="progress-item-name">${artistName}</div>
-                <div class="progress-item-status">${statusText[status]}</div>
+                <div class="progress-item-row">
+                    <div class="progress-item-icon">${icons[status]}</div>
+                    <div class="progress-item-name">${artistName}</div>
+                    <div class="progress-item-status">${statusText[status]}</div>
+                </div>
+                <div class="progress-item-details" style="display: none; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; font-size: 0.85em; color: #495057; white-space: pre-wrap; word-break: break-word;"></div>
             `;
+
+            // Add click handler to toggle details
+            item.addEventListener('click', () => {
+                const details = item.querySelector('.progress-item-details');
+                if (details && details.textContent) {
+                    details.style.display = details.style.display === 'none' ? 'block' : 'none';
+                }
+            });
 
             progressList.appendChild(item);
         }
 
-        function updateProgressItem(artistName, status, statusMessage = null) {
+        function updateProgressItem(artistName, status, statusMessage = null, generatedStyle = null) {
             const itemId = `progress-${artistName.replace(/\s+/g, '-')}`;
             const item = document.getElementById(itemId);
             if (!item) return;
@@ -1604,11 +1624,28 @@
             }[status];
 
             item.className = `progress-item ${status}`;
+
+            // Get existing details if any
+            const existingDetails = item.querySelector('.progress-item-details');
+            const existingDetailsContent = existingDetails ? existingDetails.textContent : '';
+            const existingDetailsDisplay = existingDetails ? existingDetails.style.display : 'none';
+
             item.innerHTML = `
-                <div class="progress-item-icon">${icons[status]}</div>
-                <div class="progress-item-name">${artistName}</div>
-                <div class="progress-item-status">${statusText}</div>
+                <div class="progress-item-row">
+                    <div class="progress-item-icon">${icons[status]}</div>
+                    <div class="progress-item-name">${artistName}</div>
+                    <div class="progress-item-status">${statusText}</div>
+                </div>
+                <div class="progress-item-details" style="display: ${existingDetailsDisplay}; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; font-size: 0.85em; color: #495057; white-space: pre-wrap; word-break: break-word;">${generatedStyle || existingDetailsContent}</div>
             `;
+
+            // Re-add click handler
+            item.addEventListener('click', () => {
+                const details = item.querySelector('.progress-item-details');
+                if (details && details.textContent) {
+                    details.style.display = details.style.display === 'none' ? 'block' : 'none';
+                }
+            });
 
             // Auto-scroll to current item
             item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1718,7 +1755,8 @@
                         if (artistExists && !regenerateExisting) {
                             skippedCount++;
                             processedCount++;
-                            updateProgressItem(artistName, 'skipped', 'Already exists');
+                            const existingStyle = currentArtistsData.artists[artistExists];
+                            updateProgressItem(artistName, 'skipped', 'Already exists', existingStyle);
                             updateProgressBar(processedCount, artistNames.length);
                             console.log(`⏭️ "${artistName}": SKIPPED`);
                             continue;
@@ -1760,32 +1798,32 @@
                                 processedCount++;
                                 if (artistExists) {
                                     regeneratedCount++;
-                                    updateProgressItem(artistName, 'success', 'Regenerated');
+                                    updateProgressItem(artistName, 'success', 'Regenerated', generatedStyle);
                                     console.log(`🔄 ${artistName}: regenerated`);
                                 } else {
                                     newCount++;
-                                    updateProgressItem(artistName, 'success', 'Created new');
+                                    updateProgressItem(artistName, 'success', 'Created new', generatedStyle);
                                     console.log(`✓ ${artistName}: created new`);
                                 }
                                 updateProgressBar(processedCount, artistNames.length);
                             } else {
                                 failCount++;
                                 processedCount++;
-                                updateProgressItem(artistName, 'failed', 'Save failed');
+                                updateProgressItem(artistName, 'failed', 'Save failed', generatedStyle);
                                 updateProgressBar(processedCount, artistNames.length);
                                 console.error(`✗ ${artistName}: save failed`);
                             }
                         } else {
                             failCount++;
                             processedCount++;
-                            updateProgressItem(artistName, 'failed', data.error || 'Generation failed');
+                            updateProgressItem(artistName, 'failed', data.error || 'Generation failed', null);
                             updateProgressBar(processedCount, artistNames.length);
                             console.error(`✗ ${artistName}: ${data.error}`);
                         }
                     } catch (error) {
                         failCount++;
                         processedCount++;
-                        updateProgressItem(artistName, 'failed', error.message);
+                        updateProgressItem(artistName, 'failed', error.message, null);
                         updateProgressBar(processedCount, artistNames.length);
                         console.error(`✗ ${artistName}: ${error.message}`);
                     }
@@ -1854,9 +1892,6 @@
                 return;
             }
 
-            if (!confirm(`Regenerate ${selectedArtists.size} selected artists using AI?`)) {
-                return;
-            }
 
             const regenerateBtn = document.getElementById('regenerateSelectedBtn');
             const originalText = regenerateBtn.innerHTML;
