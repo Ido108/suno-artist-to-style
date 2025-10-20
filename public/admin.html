@@ -143,19 +143,19 @@
 
         .artist-card {
             background: white;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            transition: all 0.3s;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 6px 10px;
+            margin-bottom: 4px;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
         }
 
         .artist-card:hover {
             border-color: #667eea;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
         }
 
         .artist-card.selected {
@@ -173,8 +173,8 @@
         }
 
         .artist-checkbox {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             cursor: pointer;
             flex-shrink: 0;
         }
@@ -182,33 +182,39 @@
         .artist-info {
             flex: 1;
             min-width: 0;
+            cursor: pointer;
         }
 
         .artist-name {
-            font-size: 1.1em;
-            font-weight: 700;
+            font-size: 0.95em;
+            font-weight: 600;
             color: #2d3748;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
 
         .artist-style {
             color: #718096;
-            line-height: 1.4;
-            font-size: 0.9em;
+            line-height: 1.3;
+            font-size: 0.8em;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
+        .artist-details {
+            margin-top: 8px;
+        }
+
         .artist-actions {
             display: flex;
-            gap: 6px;
+            gap: 4px;
             flex-shrink: 0;
         }
 
         .artist-actions .btn {
-            padding: 6px 12px;
-            font-size: 13px;
+            padding: 4px 8px;
+            font-size: 12px;
+            min-width: 32px;
         }
 
         .stats {
@@ -500,7 +506,16 @@
                     <select id="genreFilter" onchange="filterByGenre()" style="font-size: 13px; padding: 6px 12px; width: auto;">
                         <option value="">All Genres</option>
                     </select>
+                    <div style="font-size: 13px; color: #667eea; font-weight: 600; white-space: nowrap;" id="displayIndicator">
+                        Showing: 0 | Selected: 0
+                    </div>
                     <div style="flex: 1"></div>
+                    <button class="btn" onclick="selectAllVisible()" style="font-size: 13px; padding: 6px 12px; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white;">
+                        ☑️ Select All
+                    </button>
+                    <button class="btn" onclick="deselectAll()" style="font-size: 13px; padding: 6px 12px; background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white;">
+                        ◻️ Deselect All
+                    </button>
                     <button class="btn" onclick="regenerateSelected()" id="regenerateSelectedBtn" style="font-size: 13px; padding: 6px 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;" disabled>
                         🔄 Regenerate Selected (<span id="selectedCount">0</span>)
                     </button>
@@ -785,6 +800,7 @@
 
         let currentSort = 'name'; // Default sort
         let currentGenreFilter = ''; // Current genre filter
+        let currentSearchTerm = ''; // Track current search term
 
         function displayArtists(highlightArtist = null) {
             const artistsList = document.getElementById('artistsList');
@@ -823,9 +839,13 @@
                 return `
                 <div class="artist-card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}" data-name="${name}" data-index="${index}" data-genre="${getGenreFromStyle(style)}">
                     <input type="checkbox" class="artist-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleArtistSelection('${escapeHtml(name)}', event)" onclick="handleCheckboxClick(event, ${index})">
-                    <div class="artist-info">
+                    <div class="artist-info" onclick="toggleArtistDetails('${escapeHtml(name)}')">
                         <div class="artist-name">${name}</div>
                         <div class="artist-style" title="${escapeHtml(style)}">${style}</div>
+                        <div class="artist-details" id="details-${escapeHtml(name)}" style="display: none;">
+                            <textarea class="edit-textarea" id="edit-${escapeHtml(name)}" style="width: 100%; margin-top: 10px; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; font-size: 0.9em;">${escapeHtml(style)}</textarea>
+                            <button class="btn btn-primary" onclick="saveInlineEdit('${escapeHtml(name)}'); event.stopPropagation();" style="margin-top: 8px; padding: 4px 12px; font-size: 0.85em;">💾 שמור</button>
+                        </div>
                     </div>
                     <div class="artist-actions">
                         <button class="btn btn-primary" onclick="editArtist('${escapeHtml(name)}', '${escapeHtml(style)}')">✏️</button>
@@ -840,6 +860,11 @@
                 filterByGenre();
             }
 
+            // Apply search filter if active
+            if (currentSearchTerm) {
+                applySearchFilter();
+            }
+
             // Scroll to highlighted artist
             if (highlightArtist) {
                 setTimeout(() => {
@@ -851,16 +876,49 @@
             }
 
             updateSelectedCount();
+
+            // Update display indicator if no filters are active (show all count)
+            if (!currentSearchTerm && !currentGenreFilter) {
+                setTimeout(() => updateDisplayIndicator(), 50);
+            }
         }
 
         function getGenreFromStyle(style) {
             if (!style) return 'Unknown';
-            // Get first word/genre from style
+
+            // Common main genres to detect (case-insensitive)
+            const mainGenres = [
+                'Pop', 'Rock', 'Hip-Hop', 'Rap', 'Jazz', 'Blues', 'Country', 'Electronic',
+                'Dance', 'Classical', 'R&B', 'RnB', 'Soul', 'Funk', 'Reggae', 'Metal',
+                'Punk', 'Folk', 'Indie', 'Alternative', 'Gospel', 'Latin', 'Ska',
+                'Disco', 'House', 'Techno', 'Trance', 'Dubstep', 'Reggaeton',
+                'Psytrance', 'Qawwali', 'Rockabilly', 'Roll', 'Salsa', 'Score',
+                'Senegalese', 'Shoegaze', 'Son', 'Revival'
+            ];
+
+            // Convert to lowercase for comparison
+            const styleLower = style.toLowerCase();
+
+            // Check each main genre
+            for (const genre of mainGenres) {
+                const genreLower = genre.toLowerCase();
+
+                // Check if style contains this genre (as whole word or part of compound)
+                // Match patterns like: "pop", "synth-pop", "dark pop", "pop rock"
+                const regex = new RegExp(`(^|[\\s,-]|dark |synth-|indie-|alt-|electro-|dream-|art-|power-)${genreLower}([\\s,.-]|$)`, 'i');
+
+                if (regex.test(styleLower)) {
+                    return genre; // Return with proper capitalization
+                }
+            }
+
+            // If no main genre found, get first word from style
             const firstPart = style.split(',')[0].trim();
-            // Handle compound genres like "Dark Pop" -> extract "Pop"
-            const words = firstPart.split(' ');
-            // Return last word if multi-word genre (e.g., "Dark Pop" -> "Pop")
-            return words.length > 1 ? words[words.length - 1] : firstPart;
+            const words = firstPart.split(/[\s-]/); // Split by space or hyphen
+
+            // Capitalize first letter
+            const fallback = words[words.length - 1];
+            return fallback.charAt(0).toUpperCase() + fallback.slice(1).toLowerCase();
         }
 
         function updateGenreFilter(artistsWithMeta) {
@@ -893,6 +951,8 @@
                     card.style.display = 'none';
                 }
             });
+
+            updateDisplayIndicator();
         }
 
         function toggleArtistSelection(name, event) {
@@ -938,6 +998,53 @@
         function updateSelectedCount() {
             document.getElementById('selectedCount').textContent = selectedArtists.size;
             document.getElementById('regenerateSelectedBtn').disabled = selectedArtists.size === 0;
+            updateDisplayIndicator();
+        }
+
+        function updateDisplayIndicator() {
+            const allCards = document.querySelectorAll('.artist-card');
+            let visibleCount = 0;
+
+            allCards.forEach(card => {
+                if (card.style.display !== 'none') {
+                    visibleCount++;
+                }
+            });
+
+            const indicator = document.getElementById('displayIndicator');
+            indicator.textContent = `Showing: ${visibleCount} | Selected: ${selectedArtists.size}`;
+        }
+
+        function selectAllVisible() {
+            const allCards = document.querySelectorAll('.artist-card');
+
+            allCards.forEach(card => {
+                if (card.style.display !== 'none') {
+                    const name = card.dataset.name;
+                    const checkbox = card.querySelector('.artist-checkbox');
+
+                    selectedArtists.add(name);
+                    checkbox.checked = true;
+                    card.classList.add('selected');
+                }
+            });
+
+            updateSelectedCount();
+            showAlert(`בחרת ${selectedArtists.size} אמנים`, 'success');
+        }
+
+        function deselectAll() {
+            const allCards = document.querySelectorAll('.artist-card');
+
+            allCards.forEach(card => {
+                const checkbox = card.querySelector('.artist-checkbox');
+                checkbox.checked = false;
+                card.classList.remove('selected');
+            });
+
+            selectedArtists.clear();
+            updateSelectedCount();
+            showAlert('הבחירה בוטלה', 'success');
         }
 
         function sortArtists(sortType) {
@@ -946,17 +1053,23 @@
         }
 
         function filterArtists() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            currentSearchTerm = document.getElementById('searchInput').value.toLowerCase();
+            applySearchFilter();
+        }
+
+        function applySearchFilter() {
             const cards = document.querySelectorAll('.artist-card');
 
             cards.forEach(card => {
                 const name = card.dataset.name.toLowerCase();
-                if (name.includes(searchTerm)) {
-                    card.style.display = 'block';
+                if (name.includes(currentSearchTerm)) {
+                    card.style.display = 'flex';
                 } else {
                     card.style.display = 'none';
                 }
             });
+
+            updateDisplayIndicator();
         }
 
         async function saveArtist() {
@@ -979,11 +1092,67 @@
 
                 if (response.ok) {
                     showAlert('האמן נשמר בהצלחה!', 'success');
+
+                    // Store the artist name to keep in focus
+                    const savedArtistName = name;
+
                     document.getElementById('artistName').value = '';
                     document.getElementById('artistStyle').value = '';
 
-                    // Reload and highlight the saved artist
+                    // Reload and highlight the saved artist, keeping search filter
                     await loadArtists();
+
+                    // Set search to the saved artist name to keep it in focus
+                    document.getElementById('searchInput').value = savedArtistName;
+                    currentSearchTerm = savedArtistName.toLowerCase();
+
+                    displayArtists(savedArtistName);
+                } else {
+                    showAlert(data.error || 'שגיאה בשמירה', 'error');
+                }
+            } catch (error) {
+                showAlert('שגיאת רשת', 'error');
+            }
+        }
+
+        // Toggle artist details for inline editing
+        function toggleArtistDetails(name) {
+            const detailsDiv = document.getElementById(`details-${name}`);
+            if (detailsDiv) {
+                const isVisible = detailsDiv.style.display !== 'none';
+                detailsDiv.style.display = isVisible ? 'none' : 'block';
+            }
+        }
+
+        // Save inline edit
+        async function saveInlineEdit(name) {
+            const textarea = document.getElementById(`edit-${name}`);
+            const newStyle = textarea.value.trim();
+
+            if (!newStyle) {
+                showAlert('הסטייל לא יכול להיות ריק', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/artists`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, style: newStyle, password: sessionPassword })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('האמן עודכן בהצלחה!', 'success');
+
+                    // Reload and keep the artist in view with search filter
+                    await loadArtists();
+
+                    // Keep search focused on this artist
+                    document.getElementById('searchInput').value = name;
+                    currentSearchTerm = name.toLowerCase();
+
                     displayArtists(name);
                 } else {
                     showAlert(data.error || 'שגיאה בשמירה', 'error');
