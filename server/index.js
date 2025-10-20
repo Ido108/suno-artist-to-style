@@ -303,6 +303,15 @@ app.post('/api/artists', async (req, res) => {
     const data = await readArtists();
     data.artists[name] = style;
 
+    // Add timestamp metadata
+    if (!data.metadata) {
+      data.metadata = {};
+    }
+    data.metadata[name] = {
+      timestamp: Date.now(),
+      lastModified: new Date().toISOString()
+    };
+
     const success = await writeArtists(data);
 
     if (success) {
@@ -388,6 +397,15 @@ app.post('/api/contribute', async (req, res) => {
 
     // Add the new artist
     data.artists[artist] = style;
+
+    // Add timestamp metadata
+    if (!data.metadata) {
+      data.metadata = {};
+    }
+    data.metadata[artist] = {
+      timestamp: Date.now(),
+      lastModified: new Date().toISOString()
+    };
 
     // Save to file
     const success = await writeArtists(data);
@@ -508,6 +526,8 @@ Like Billy Joel ❌
 Similar to Adele's style ❌
 Pop music ❌ (too vague)
 Great artist with amazing voice ❌ (not descriptive)
+
+MAKE SURE IT PERFECTLY REPRESENT THE PROVIDED ARTIST/BAND/COMPOSER WITH NO IRRELEVANT INFO THAT IS NOT PERFECTLY MATCHES THE SPECIFIC DETAILED STYLE.
 
 Artist: ${artistName}
 
