@@ -1378,7 +1378,7 @@
 
             // Show loading state
             generateBtn.disabled = true;
-            generateBtn.innerHTML = `⏳ מעבד ${artistNames.length} אמנים...`;
+            generateBtn.innerHTML = `⏳ טוען נתונים...`;
 
             let successCount = 0;
             let failCount = 0;
@@ -1387,16 +1387,34 @@
             let newCount = 0;
 
             try {
+                // Load fresh artist data from server to check which artists already exist
+                console.log('🔄 Loading fresh artist data from server...');
+                const artistsResponse = await fetch(`${API_URL}/api/artists`);
+                const currentArtistsData = await artistsResponse.json();
+                console.log(`📊 Loaded ${Object.keys(currentArtistsData.artists || {}).length} existing artists`);
+                console.log(`⚙️ Regenerate existing: ${regenerateExisting ? 'YES' : 'NO'}`);
+
+                // Update loading state
+                generateBtn.innerHTML = `⏳ מעבד ${artistNames.length} אמנים...`;
+
                 for (const artistName of artistNames) {
                     try {
-                        // Check if artist already exists
-                        const artistExists = artistsData.artists && artistsData.artists[artistName];
+                        // Check if artist already exists (case-sensitive exact match)
+                        const artistExists = currentArtistsData.artists && currentArtistsData.artists[artistName];
+
+                        console.log(`🔍 Checking "${artistName}": ${artistExists ? 'EXISTS' : 'NEW'}`);
 
                         // Skip if exists and regenerateExisting is not checked
                         if (artistExists && !regenerateExisting) {
                             skippedCount++;
-                            console.log(`⏭️ ${artistName}: skipped (already exists)`);
+                            console.log(`⏭️ "${artistName}": SKIPPED (already exists, regenerate is OFF)`);
                             continue;
+                        }
+
+                        if (artistExists && regenerateExisting) {
+                            console.log(`🔄 "${artistName}": REGENERATING (already exists, regenerate is ON)`);
+                        } else {
+                            console.log(`✨ "${artistName}": CREATING NEW`);
                         }
 
                         // Generate style for this artist
