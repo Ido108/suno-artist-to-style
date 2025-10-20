@@ -606,6 +606,11 @@
                             <option value="gpt-4.1-mini">OpenAI - GPT-4.1-mini</option>
                             <option value="gpt-4o">OpenAI - GPT-4o</option>
                             <option value="o4-mini">OpenAI - o4-Mini</option>
+                            <option value="grok-4-fast-reasoning">X.AI - Grok 4 Fast Reasoning</option>
+                            <option value="grok-4-fast-non-reasoning">X.AI - Grok 4 Fast Non-Reasoning</option>
+                            <option value="grok-4-0709">X.AI - Grok 4 (0709)</option>
+                            <option value="grok-3-mini">X.AI - Grok 3 Mini</option>
+                            <option value="grok-3">X.AI - Grok 3</option>
                         </select>
                     </div>
 
@@ -645,7 +650,28 @@
             <div>
                 <button class="btn btn-primary" onclick="saveArtist()">💾 שמור/עדכן אמן</button>
                 <button class="btn btn-success" onclick="loadArtists()">🔄 רענן רשימה</button>
-                <button class="btn" onclick="downloadJSON()" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white;">📥 הורד JSON</button>
+            </div>
+
+            <div style="margin-top: 20px; padding: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px;">
+                <h3 style="color: #856404; margin-bottom: 15px; font-size: 1.1em;">📁 ניהול קובץ JSON</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn" onclick="downloadJSON()" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white;">
+                        📥 Download JSON
+                    </button>
+                    <button class="btn" onclick="openJsonEditor()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        ✏️ Edit JSON
+                    </button>
+                    <button class="btn" onclick="document.getElementById('uploadJsonInput').click()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                        📤 Upload JSON
+                    </button>
+                    <button class="btn" onclick="clearAllArtists()" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;">
+                        🗑️ Clear All
+                    </button>
+                </div>
+                <input type="file" id="uploadJsonInput" accept=".json" style="display: none;" onchange="handleJsonUpload(event)">
+                <p style="font-size: 0.85em; color: #856404; margin-top: 10px; margin-bottom: 0;">
+                    ⚠️ כל פעולה יוצרת backup אוטומטי
+                </p>
             </div>
         </div>
 
@@ -781,6 +807,7 @@
             if (modelId.startsWith('gemini')) { return 'google'; }
             else if (modelId.startsWith('claude')) { return 'anthropic'; }
             else if (modelId.startsWith('gpt') || modelId.startsWith('o')) { return 'openai'; }
+            else if (modelId.startsWith('grok')) { return 'xai'; }
             return 'unknown';
         }
 
@@ -819,7 +846,8 @@
             let links = {
                 'google': 'https://aistudio.google.com/apikey',
                 'anthropic': 'https://console.anthropic.com/',
-                'openai': 'https://platform.openai.com/api-keys'
+                'openai': 'https://platform.openai.com/api-keys',
+                'xai': 'https://console.x.ai/'
             };
 
             if (links[providerName]) {
@@ -1490,6 +1518,16 @@
             console.log('Downloaded artist_styles.json');
         }
 
+        // Helper function to normalize artist names (removes diacritics/accents)
+        // This makes "Beyoncé" === "Beyonce", "Motörhead" === "Motorhead", etc.
+        function normalizeArtistName(name) {
+            return name
+                .normalize('NFD') // Decompose combined characters
+                .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+                .toLowerCase()
+                .trim();
+        }
+
         // Progress Modal Functions
         function openProgressModal() {
             document.getElementById('progressModal').classList.add('active');
@@ -1636,7 +1674,12 @@
                 let willSkip = 0;
 
                 for (const artistName of artistNames) {
-                    const artistExists = currentArtistsData.artists && currentArtistsData.artists[artistName];
+                    // Case-insensitive + diacritic-insensitive check
+                    const nameNormalized = normalizeArtistName(artistName);
+                    const artistExists = Object.keys(currentArtistsData.artists || {}).find(
+                        key => normalizeArtistName(key) === nameNormalized
+                    );
+
                     if (artistExists) {
                         existingArtists.push(artistName);
                         if (!regenerateExisting) {
@@ -1665,8 +1708,11 @@
 
                 for (const artistName of artistNames) {
                     try {
-                        // Check if artist already exists (case-sensitive exact match)
-                        const artistExists = currentArtistsData.artists && currentArtistsData.artists[artistName];
+                        // Check if artist already exists (case-insensitive + diacritic-insensitive)
+                        const nameNormalized = normalizeArtistName(artistName);
+                        const artistExists = Object.keys(currentArtistsData.artists || {}).find(
+                            key => normalizeArtistName(key) === nameNormalized
+                        );
 
                         // Skip if exists and regenerateExisting is not checked
                         if (artistExists && !regenerateExisting) {
@@ -1984,6 +2030,153 @@
                 showAlert('שגיאה: ' + error.message, 'error');
             }
         }
+
+        // JSON Management Functions
+
+        // Open JSON Editor Modal
+        async function openJsonEditor() {
+            try {
+                const response = await fetch(`${API_URL}/api/json/raw`);
+                const jsonData = await response.json();
+
+                const jsonString = JSON.stringify(jsonData, null, 2);
+                document.getElementById('jsonEditorTextarea').value = jsonString;
+                document.getElementById('jsonEditorModal').classList.add('active');
+            } catch (error) {
+                showAlert('שגיאה בטעינת JSON: ' + error.message, 'error');
+            }
+        }
+
+        function closeJsonEditor() {
+            document.getElementById('jsonEditorModal').classList.remove('active');
+        }
+
+        // Save edited JSON
+        async function saveEditedJson() {
+            const textarea = document.getElementById('jsonEditorTextarea');
+            const saveBtn = document.getElementById('saveJsonBtn');
+            const originalText = saveBtn.textContent;
+
+            try {
+                // Parse JSON to validate
+                const jsonData = JSON.parse(textarea.value);
+
+                // Validate structure
+                if (!jsonData.artists || typeof jsonData.artists !== 'object') {
+                    throw new Error('Invalid JSON structure - missing artists object');
+                }
+
+                saveBtn.textContent = '⏳ Saving...';
+                saveBtn.disabled = true;
+
+                const response = await fetch(`${API_URL}/api/json/upload`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        password: sessionPassword,
+                        jsonData: jsonData
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert(`✅ JSON saved! ${result.artistCount} artists. Backup: ${result.backupFile}`, 'success');
+                    closeJsonEditor();
+                    loadArtists();
+                } else {
+                    throw new Error(result.error || 'Failed to save');
+                }
+            } catch (error) {
+                showAlert('שגיאה: ' + error.message, 'error');
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }
+        }
+
+        // Handle JSON file upload
+        async function handleJsonUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+
+            reader.onload = async (e) => {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
+
+                    if (!jsonData.artists || typeof jsonData.artists !== 'object') {
+                        throw new Error('Invalid JSON structure - missing artists object');
+                    }
+
+                    const artistCount = Object.keys(jsonData.artists).length;
+
+                    if (!confirm(`⚠️ Upload JSON with ${artistCount} artists?\n\nThis will REPLACE the current database.\nA backup will be created automatically.`)) {
+                        event.target.value = ''; // Reset input
+                        return;
+                    }
+
+                    const response = await fetch(`${API_URL}/api/json/upload`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            password: sessionPassword,
+                            jsonData: jsonData
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        showAlert(`✅ JSON uploaded! ${result.artistCount} artists loaded.`, 'success');
+                        loadArtists();
+                    } else {
+                        throw new Error(result.error || 'Upload failed');
+                    }
+                } catch (error) {
+                    showAlert('שגיאה: ' + error.message, 'error');
+                } finally {
+                    event.target.value = ''; // Reset input
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        // Clear all artists
+        async function clearAllArtists() {
+            const artistCount = Object.keys(artistsData.artists || {}).length;
+
+            const userConfirm = prompt(`⚠️⚠️⚠️ WARNING ⚠️⚠️⚠️\n\nThis will DELETE ALL ${artistCount} artists from the database!\n\nA backup will be created automatically.\n\nType "DELETE ALL" to confirm:`);
+
+            if (userConfirm !== 'DELETE ALL') {
+                showAlert('ביטול הפעולה', 'success');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/json/clear`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        password: sessionPassword,
+                        confirm: 'DELETE_ALL_ARTISTS'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert(`✅ All artists cleared. Backup: ${result.backupFile}`, 'success');
+                    loadArtists();
+                } else {
+                    throw new Error(result.error || 'Failed to clear');
+                }
+            } catch (error) {
+                showAlert('שגיאה: ' + error.message, 'error');
+            }
+        }
     </script>
 
     <!-- Progress Modal -->
@@ -2015,6 +2208,39 @@
             <div class="progress-footer">
                 <button class="btn btn-primary" id="closeProgressBtn" onclick="closeProgressModal()" style="display: none;">
                     ✅ Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSON Editor Modal -->
+    <div id="jsonEditorModal" class="progress-modal">
+        <div class="progress-panel" style="max-width: 800px;">
+            <div class="progress-header">
+                <h2>✏️ Edit JSON Database</h2>
+                <p style="color: #6c757d; font-size: 0.9em; margin-top: 8px;">
+                    Direct edit of artist_styles.json - Be careful! A backup will be created automatically.
+                </p>
+            </div>
+            <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+                <textarea id="jsonEditorTextarea" style="
+                    flex: 1;
+                    font-family: 'Courier New', monospace;
+                    font-size: 13px;
+                    padding: 15px;
+                    border: 2px solid #dee2e6;
+                    border-radius: 8px;
+                    resize: none;
+                    background: #f8f9fa;
+                    color: #2d3748;
+                "></textarea>
+            </div>
+            <div class="progress-footer" style="margin-top: 20px;">
+                <button class="btn" onclick="closeJsonEditor()" style="background: #6c757d; color: white;">
+                    ✖️ Cancel
+                </button>
+                <button class="btn btn-primary" id="saveJsonBtn" onclick="saveEditedJson()">
+                    💾 Save JSON
                 </button>
             </div>
         </div>
