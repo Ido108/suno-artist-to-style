@@ -1478,7 +1478,8 @@
                         artistName: name,
                         password: sessionPassword,
                         llmProvider,
-                        apiKey: apiKey
+                        apiKey: apiKey,
+                        type: type
                     })
                 });
 
@@ -1714,9 +1715,11 @@
             const apiKey = document.getElementById('apiKey').value.trim();
             const generateBtn = document.getElementById('generateBtn');
             const originalText = generateBtn.innerHTML;
+            const entryType = document.querySelector('input[name="entry-type"]:checked').value;
+            const isArtist = entryType === 'artist';
 
             if (!artistNameInput) {
-                showAlert('נא להזין שם אמן תחילה', 'error');
+                showAlert(`נא להזין שם ${isArtist ? 'אמן' : 'שיר'} תחילה`, 'error');
                 return;
             }
 
@@ -1732,11 +1735,11 @@
                 saveApiKeyToLocalStorage(llmProvider, apiKey);
             }
 
-            // Check if multiple artists (separated by commas)
+            // Check if multiple entries (separated by commas)
             const artistNames = artistNameInput.split(',').map(name => name.trim()).filter(name => name.length > 0);
 
             if (artistNames.length === 0) {
-                showAlert('נא להזין שם אמן תקין', 'error');
+                showAlert(`נא להזין שם ${isArtist ? 'אמן' : 'שיר'} תקין`, 'error');
                 return;
             }
 
@@ -1825,7 +1828,7 @@
                         // Update status to processing
                         updateProgressItem(artistName, 'processing');
 
-                        // Generate style for this artist
+                        // Generate style for this entry
                         const response = await fetch(`${API_URL}/api/generate-style`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -1833,7 +1836,8 @@
                                 artistName,
                                 password: sessionPassword,
                                 llmProvider,
-                                apiKey: apiKey
+                                apiKey: apiKey,
+                                type: entryType
                             })
                         });
 
@@ -1969,6 +1973,9 @@
                     try {
                         // Find the card and show loading
                         const card = document.querySelector(`.artist-card[data-name="${artistName}"]`);
+                        const entryType = card ? card.dataset.type : 'artist';
+                        const isArtist = entryType === 'artist';
+
                         if (card) {
                             const styleDiv = card.querySelector('.artist-style');
                             styleDiv.innerHTML = '<span style="color: #667eea;">⏳ Generating...</span>';
@@ -1982,7 +1989,8 @@
                                 artistName,
                                 password: sessionPassword,
                                 llmProvider,
-                                apiKey: apiKey
+                                apiKey: apiKey,
+                                type: entryType
                             })
                         });
 
@@ -1992,7 +2000,8 @@
                             const newStyle = data.generatedStyle;
 
                             // Auto-save
-                            const saveResponse = await fetch(`${API_URL}/api/artists`, {
+                            const saveEndpoint = isArtist ? '/api/artists' : '/api/songs';
+                            const saveResponse = await fetch(`${API_URL}${saveEndpoint}`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({

@@ -306,15 +306,20 @@ app.post('/save-api-key', async (req, res) => {
 // Returns the prompt template that extensions can use to call AI APIs directly
 app.get('/api/get-prompt', async (req, res) => {
   try {
-    const { artistName } = req.query;
+    const { artistName, type } = req.query;
 
     if (!artistName) {
-      return res.status(400).json({ error: 'Artist name is required' });
+      return res.status(400).json({ error: 'Artist/song name is required' });
     }
+
+    const isArtist = !type || type === 'artist';
 
     // Return the system prompt - extensions will use this to call AI APIs directly
     // This way API keys NEVER pass through our server!
-    const systemPrompt = `You are an expert music analyst and Suno AI style descriptor. Your job is to analyze artists and create detailed, accurate style descriptions for music generation.
+    let systemPrompt;
+
+    if (isArtist) {
+      systemPrompt = `You are an expert music analyst and Suno AI style descriptor. Your job is to analyze artists and create detailed, accurate style descriptions for music generation.
 
 CRITICAL INSTRUCTIONS:
 1. Create a comma-separated description that captures the EXACT musical characteristics
@@ -353,6 +358,48 @@ MAKE SURE IT PERFECTLY REPRESENT THE PROVIDED ARTIST/BAND/COMPOSER WITH NO IRREL
 Artist: ${artistName}
 
 Generate ONLY the detailed, comma-separated style description:`;
+    } else {
+      // Song-specific prompt
+      systemPrompt = `You are an expert music analyst and Suno AI style descriptor. Your job is to analyze SPECIFIC SONGS and create detailed, accurate style descriptions for music generation.
+
+CRITICAL INSTRUCTIONS:
+1. Create a comma-separated description that captures the EXACT characteristics of THIS SPECIFIC SONG
+2. Focus on: Genre, Sub-genre, Song structure, Key musical elements, Vocal delivery, Mood, Specific instrumentation, Production style
+3. Be SPECIFIC and DETAILED - describe what makes THIS SONG unique
+4. Include technical music terms when relevant
+5. Keep it concise but comprehensive (aim for 10-20 descriptive elements)
+6. Do NOT include the song name or artist name in the output
+7. Do NOT use phrases like "in the style of" or "similar to"
+8. Output ONLY the comma-separated style description, no quotes, no explanations
+9. Focus on the SPECIFIC characteristics of this particular song, not the artist's general style
+
+FORMAT RULES:
+- Comma-separated list
+- Start with main genre(s)
+- Include specific instruments and sounds used in THIS song
+- Describe vocal characteristics and delivery in THIS song
+- Add mood/feeling descriptors specific to THIS song
+- Include tempo and rhythm patterns
+- Mention production style and sonic qualities
+- Highlight unique elements that define THIS song
+
+EXAMPLES OF GOOD OUTPUT (for specific songs):
+Rock opera, Multi-section structure, Piano ballad intro, Guitar-driven middle section, Operatic vocals, Harmonized backing vocals, Dramatic dynamics, Tempo changes, British rock, Theatrical, Epic, Six-minute composition
+Grunge, Dark, Heavy distorted guitars, Drop-D tuning, Quiet verse loud chorus dynamic, Apathetic vocal delivery, Nihilistic mood, Slow tempo, Raw production, Iconic opening riff
+Ballad, Piano-driven, Powerful emotional female vocals, Gospel-influenced, Slow to moderate tempo, Orchestral strings, Dynamic build-up, Melancholic to triumphant, Modern production, Vocal runs, Heartbreak theme
+
+EXAMPLES OF BAD OUTPUT:
+Like Queen ❌
+Bohemian Rhapsody style ❌
+Rock ❌ (too vague)
+Great song ❌ (not descriptive)
+
+MAKE SURE IT PERFECTLY REPRESENTS THIS SPECIFIC SONG'S UNIQUE CHARACTERISTICS, NOT THE ARTIST'S GENERAL STYLE.
+
+Song: ${artistName}
+
+Generate ONLY the detailed, comma-separated style description for this specific song:`;
+    }
 
     res.json({ prompt: systemPrompt });
 
@@ -764,10 +811,10 @@ app.post('/api/generate', async (req, res) => {
   }
 });
 
-// AI Style Generator - Generate artist style description using LLM
+// AI Style Generator - Generate artist or song style description using LLM
 app.post('/api/generate-style', async (req, res) => {
   try {
-    const { artistName, password, llmProvider: llmProviderFromReq, apiKey: apiKeyFromReq } = req.body;
+    const { artistName, password, llmProvider: llmProviderFromReq, apiKey: apiKeyFromReq, type } = req.body;
 
     // Password optional - only check if provided (for admin panel use)
     // If no password provided, it's from extension popup (read-only generation)
@@ -776,11 +823,12 @@ app.post('/api/generate-style', async (req, res) => {
     }
 
     if (!artistName) {
-      return res.status(400).json({ error: 'Artist name is required' });
+      return res.status(400).json({ error: 'Name is required' });
     }
 
     const llmProvider = llmProviderFromReq || 'gemini-2.0-flash'; // Default model
     let apiKey = apiKeyFromReq;
+    const isArtist = !type || type === 'artist';
 
     // API key is required from the client
     if (!apiKey) {
@@ -789,10 +837,13 @@ app.post('/api/generate-style', async (req, res) => {
       });
     }
 
-    console.log(`[Generate-Style] Processing request for ${artistName} using ${llmProvider}`);
+    console.log(`[Generate-Style] Processing request for ${isArtist ? 'artist' : 'song'} "${artistName}" using ${llmProvider}`);
 
-    // Detailed prompt for generating artist style
-    const systemPrompt = `You are an expert music analyst and Suno AI style descriptor. Your job is to analyze artists and create detailed, accurate style descriptions for music generation.
+    // Get the appropriate prompt based on type
+    let systemPrompt;
+
+    if (isArtist) {
+      systemPrompt = `You are an expert music analyst and Suno AI style descriptor. Your job is to analyze artists and create detailed, accurate style descriptions for music generation.
 
 CRITICAL INSTRUCTIONS:
 1. Create a comma-separated description that captures the EXACT musical characteristics
@@ -831,6 +882,48 @@ MAKE SURE IT PERFECTLY REPRESENT THE PROVIDED ARTIST/BAND/COMPOSER WITH NO IRREL
 Artist: ${artistName}
 
 Generate ONLY the detailed, comma-separated style description:`;
+    } else {
+      // Song-specific prompt
+      systemPrompt = `You are an expert music analyst and Suno AI style descriptor. Your job is to analyze SPECIFIC SONGS and create detailed, accurate style descriptions for music generation.
+
+CRITICAL INSTRUCTIONS:
+1. Create a comma-separated description that captures the EXACT characteristics of THIS SPECIFIC SONG
+2. Focus on: Genre, Sub-genre, Song structure, Key musical elements, Vocal delivery, Mood, Specific instrumentation, Production style
+3. Be SPECIFIC and DETAILED - describe what makes THIS SONG unique
+4. Include technical music terms when relevant
+5. Keep it concise but comprehensive (aim for 10-20 descriptive elements)
+6. Do NOT include the song name or artist name in the output
+7. Do NOT use phrases like "in the style of" or "similar to"
+8. Output ONLY the comma-separated style description, no quotes, no explanations
+9. Focus on the SPECIFIC characteristics of this particular song, not the artist's general style
+
+FORMAT RULES:
+- Comma-separated list
+- Start with main genre(s)
+- Include specific instruments and sounds used in THIS song
+- Describe vocal characteristics and delivery in THIS song
+- Add mood/feeling descriptors specific to THIS song
+- Include tempo and rhythm patterns
+- Mention production style and sonic qualities
+- Highlight unique elements that define THIS song
+
+EXAMPLES OF GOOD OUTPUT (for specific songs):
+Rock opera, Multi-section structure, Piano ballad intro, Guitar-driven middle section, Operatic vocals, Harmonized backing vocals, Dramatic dynamics, Tempo changes, British rock, Theatrical, Epic, Six-minute composition
+Grunge, Dark, Heavy distorted guitars, Drop-D tuning, Quiet verse loud chorus dynamic, Apathetic vocal delivery, Nihilistic mood, Slow tempo, Raw production, Iconic opening riff
+Ballad, Piano-driven, Powerful emotional female vocals, Gospel-influenced, Slow to moderate tempo, Orchestral strings, Dynamic build-up, Melancholic to triumphant, Modern production, Vocal runs, Heartbreak theme
+
+EXAMPLES OF BAD OUTPUT:
+Like Queen ❌
+Bohemian Rhapsody style ❌
+Rock ❌ (too vague)
+Great song ❌ (not descriptive)
+
+MAKE SURE IT PERFECTLY REPRESENTS THIS SPECIFIC SONG'S UNIQUE CHARACTERISTICS, NOT THE ARTIST'S GENERAL STYLE.
+
+Song: ${artistName}
+
+Generate ONLY the detailed, comma-separated style description for this specific song:`;
+    }
 
     let generatedStyle = '';
 
