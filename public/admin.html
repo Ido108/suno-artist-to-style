@@ -673,6 +673,21 @@
                 <button class="btn btn-success" onclick="loadArtists()">🔄 רענן רשימה</button>
             </div>
 
+            <div style="margin-top: 20px; padding: 20px; background: #e7f3ff; border: 2px solid #667eea; border-radius: 12px;">
+                <h3 style="color: #004085; margin-bottom: 15px; font-size: 1.1em;">✨ ניהול Prompts</h3>
+                <p style="font-size: 0.85em; color: #004085; margin-bottom: 15px;">
+                    ערוך את ה-prompts שה-AI משתמש בהם ליצירת סגנונות
+                </p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn" onclick="openPromptEditor('artist')" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        🎤 Edit Artist Prompt
+                    </button>
+                    <button class="btn" onclick="openPromptEditor('song')" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                        🎵 Edit Song Prompt
+                    </button>
+                </div>
+            </div>
+
             <div style="margin-top: 20px; padding: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px;">
                 <h3 style="color: #856404; margin-bottom: 15px; font-size: 1.1em;">📁 ניהול קובץ JSON</h3>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -2341,6 +2356,72 @@
                 showAlert('שגיאה: ' + error.message, 'error');
             }
         }
+
+        // Prompt Editor Functions
+        let currentPromptType = 'artist';
+
+        async function openPromptEditor(type) {
+            currentPromptType = type;
+            const title = type === 'artist' ? '🎤 Edit Artist Prompt' : '🎵 Edit Song Prompt';
+            const placeholder = type === 'artist' ? '{ARTIST_NAME}' : '{SONG_NAME}';
+
+            document.getElementById('promptEditorTitle').textContent = title;
+            document.getElementById('promptEditorDesc').textContent = `Edit the ${type} prompt template. Use ${placeholder} as placeholder.`;
+
+            try {
+                const response = await fetch(`${API_URL}/api/prompts`);
+                const prompts = await response.json();
+
+                document.getElementById('promptEditorTextarea').value = prompts[type] || '';
+                document.getElementById('promptEditorModal').classList.add('active');
+            } catch (error) {
+                showAlert('שגיאה בטעינת prompt: ' + error.message, 'error');
+            }
+        }
+
+        function closePromptEditor() {
+            document.getElementById('promptEditorModal').classList.remove('active');
+        }
+
+        async function savePrompt() {
+            const content = document.getElementById('promptEditorTextarea').value.trim();
+            const saveBtn = document.getElementById('savePromptBtn');
+            const originalText = saveBtn.textContent;
+
+            if (!content) {
+                showAlert('Prompt cannot be empty', 'error');
+                return;
+            }
+
+            saveBtn.textContent = '⏳ Saving...';
+            saveBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/api/prompts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: currentPromptType,
+                        content: content,
+                        password: sessionPassword
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert(`✅ ${currentPromptType} prompt saved!`, 'success');
+                    closePromptEditor();
+                } else {
+                    throw new Error(result.error || 'Failed to save');
+                }
+            } catch (error) {
+                showAlert('שגיאה: ' + error.message, 'error');
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }
+        }
     </script>
 
     <!-- Progress Modal -->
@@ -2405,6 +2486,39 @@
                 </button>
                 <button class="btn btn-primary" id="saveJsonBtn" onclick="saveEditedJson()">
                     💾 Save JSON
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompt Editor Modal -->
+    <div id="promptEditorModal" class="progress-modal">
+        <div class="progress-panel" style="max-width: 800px;">
+            <div class="progress-header">
+                <h2 id="promptEditorTitle">✏️ Edit Prompt</h2>
+                <p style="color: #6c757d; font-size: 0.9em; margin-top: 8px;" id="promptEditorDesc">
+                    Edit the AI prompt template. Use {ARTIST_NAME} or {SONG_NAME} as placeholder.
+                </p>
+            </div>
+            <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+                <textarea id="promptEditorTextarea" style="
+                    flex: 1;
+                    font-family: 'Courier New', monospace;
+                    font-size: 13px;
+                    padding: 15px;
+                    border: 2px solid #dee2e6;
+                    border-radius: 8px;
+                    resize: none;
+                    background: #f8f9fa;
+                    color: #2d3748;
+                "></textarea>
+            </div>
+            <div class="progress-footer" style="margin-top: 20px;">
+                <button class="btn" onclick="closePromptEditor()" style="background: #6c757d; color: white;">
+                    ✖️ Cancel
+                </button>
+                <button class="btn btn-primary" id="savePromptBtn" onclick="savePrompt()">
+                    💾 Save Prompt
                 </button>
             </div>
         </div>

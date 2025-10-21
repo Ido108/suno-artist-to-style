@@ -42,6 +42,12 @@ const VOLUME_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || __dirname;
 const ARTISTS_FILE = path.join(VOLUME_PATH, 'artist_styles.json');
 const FALLBACK_FILE = path.join(__dirname, '../artist_styles.json');
 
+// Prompt files
+const ARTIST_PROMPT_FILE = path.join(VOLUME_PATH, 'artist_prompt.txt');
+const SONG_PROMPT_FILE = path.join(VOLUME_PATH, 'song_prompt.txt');
+const FALLBACK_ARTIST_PROMPT = path.join(__dirname, '../artist_prompt.txt');
+const FALLBACK_SONG_PROMPT = path.join(__dirname, '../song_prompt.txt');
+
 // Initialize: Copy from fallback if volume file doesn't exist
 if (process.env.RAILWAY_VOLUME_MOUNT_PATH && !fsSync.existsSync(ARTISTS_FILE)) {
   console.log('Initializing artist_styles.json in Railway volume...');
@@ -52,6 +58,18 @@ if (process.env.RAILWAY_VOLUME_MOUNT_PATH && !fsSync.existsSync(ARTISTS_FILE)) {
     }
   } catch (error) {
     console.error('Error copying to volume:', error.message);
+  }
+}
+
+// Initialize: Copy prompt files to volume if they don't exist
+if (process.env.RAILWAY_VOLUME_MOUNT_PATH) {
+  if (!fsSync.existsSync(ARTIST_PROMPT_FILE) && fsSync.existsSync(FALLBACK_ARTIST_PROMPT)) {
+    fsSync.copyFileSync(FALLBACK_ARTIST_PROMPT, ARTIST_PROMPT_FILE);
+    console.log('Copied artist_prompt.txt to volume');
+  }
+  if (!fsSync.existsSync(SONG_PROMPT_FILE) && fsSync.existsSync(FALLBACK_SONG_PROMPT)) {
+    fsSync.copyFileSync(FALLBACK_SONG_PROMPT, SONG_PROMPT_FILE);
+    console.log('Copied song_prompt.txt to volume');
   }
 }
 
@@ -114,6 +132,43 @@ async function writeArtists(data) {
     return true;
   } catch (error) {
     console.error('Error writing artists file:', error.message);
+    return false;
+  }
+}
+
+// Helper function to read prompt file
+async function readPrompt(type) {
+  try {
+    const promptFile = type === 'artist' ? ARTIST_PROMPT_FILE : SONG_PROMPT_FILE;
+    const fallbackFile = type === 'artist' ? FALLBACK_ARTIST_PROMPT : FALLBACK_SONG_PROMPT;
+
+    // Try volume file first
+    if (fsSync.existsSync(promptFile)) {
+      const data = await fs.readFile(promptFile, 'utf-8');
+      return data;
+    }
+
+    // Fall back to local file
+    if (fsSync.existsSync(fallbackFile)) {
+      const data = await fs.readFile(fallbackFile, 'utf-8');
+      return data;
+    }
+
+    return null;
+  } catch (error) {
+    console.error(`Error reading ${type} prompt file:`, error.message);
+    return null;
+  }
+}
+
+// Helper function to write prompt file
+async function writePrompt(type, content) {
+  try {
+    const promptFile = type === 'artist' ? ARTIST_PROMPT_FILE : SONG_PROMPT_FILE;
+    await fs.writeFile(promptFile, content, 'utf-8');
+    return true;
+  } catch (error) {
+    console.error(`Error writing ${type} prompt file:`, error.message);
     return false;
   }
 }
@@ -314,98 +369,16 @@ app.get('/api/get-prompt', async (req, res) => {
 
     const isArtist = !type || type === 'artist';
 
-    // Return the system prompt - extensions will use this to call AI APIs directly
-    // This way API keys NEVER pass through our server!
-    let systemPrompt;
+    // Read prompt from file
+    let promptTemplate = await readPrompt(isArtist ? 'artist' : 'song');
 
-    if (isArtist) {
-      systemPrompt = `You are an expert music analyst and Suno AI style descriptor. Your job is to analyze artists and create detailed, accurate style descriptions for music generation.
-
-CRITICAL INSTRUCTIONS:
-1. Create a comma-separated description that captures the EXACT musical characteristics
-2. Focus on: Genre, Sub-genre, Tempo feel, Instrumentation, Vocal style, Mood, Production style
-3. Be SPECIFIC and DETAILED - avoid generic terms
-4. Include technical music terms when relevant
-5. Keep it concise but comprehensive (aim for 6-11 descriptive elements)
-6. Do NOT include the artist name in the output
-7. Do NOT use phrases like "in the style of" or "similar to"
-8. Output ONLY the comma-separated style description, no quotes, no explanations
-9. MAKE SURE you state the artist decade that defines the kind of music (like "90's [genre]")
-
-FORMAT RULES:
-- Comma-separated list
-- Start with main genre(s)
-- Include specific instruments
-- Describe vocal characteristics (if applicable)
-- Include tempo indicators (e.g., upbeat, slow, moderate)
-- Mention production style (e.g., polished, raw, lo-fi, orchestral)
-- DO NOT INCLUDE ANY sub-element that not PERFECTLY matched the majority of this artist repertiore
-- NEVER USE general description, "rock" can mean 1000 different sub-genres that not matching the same for different artist, be PERCISE.
-
-EXAMPLES OF GOOD settings for outputs (just inspirational, USE correct settings):
-Piano-driven pop, Joyful Gospel with choir vocals, clapping, and uplifting organ melody, Male vocals, 80s production, Melodic, Catchy hooks, Anthemic choruses
-Soul, Emotional, [specific setting] artist, dou, Torch-Lounge, Powerful female vocals, Gospel influences, Choir background vocals, Melancholic, Piano and strings
-Alternative Rock, Boy band, k-pop, [specific setting] band, Grunge, Dark, Melodic, Heavy guitar riffs, Baritone male vocals, 90s Seattle sound, Introspective
-EDM, Melodic, Euphoric, Build-ups and drops, Synth-heavy, Festival anthems, Emotional vocal samples, Progressive house
-happy choir, energetic soul, gospel, jazz, Christian choir, worship, rhythmical, blues, motown piano, funk pop, brass energetic section, eurodance 80's, disco soul, epic disco, funk, energetic trombones, strings stabs, energetic strings, syncopated piano, brass hits
-EXAMPLES OF BAD OUTPUT:
-Like Billy Joel ❌
-Similar to Adele's style ❌
-Pop music ❌ (too vague)
-Great artist with amazing voice ❌ (not descriptive)
-
-MAKE SURE IT PERFECTLY REPRESENT THE PROVIDED ARTIST/BAND/COMPOSER WITH NO IRRELEVANT INFO THAT IS NOT PERFECTLY MATCHES THE SPECIFIC DETAILED STYLE.
-
-Artist: ${artistName}
-
-Generate ONLY the detailed, comma-separated style description:`;
-    } else {
-      // Song-specific prompt
-      systemPrompt = `You are an expert music analyst and Suno AI style descriptor. Your job is to analyze SPECIFIC SONGS and create detailed, accurate style descriptions for music generation.
-
-CRITICAL INSTRUCTIONS:
-1. Create a comma-separated description that captures the EXACT characteristics of THIS SPECIFIC SONG
-2. Focus on: Genre, Sub-genre, Song structure, Key musical elements, Vocal delivery, Mood, Specific instrumentation, Production style
-3. Be SPECIFIC and DETAILED - describe what makes THIS SONG unique
-4. Include technical music terms when relevant
-5. Keep it concise but comprehensive (aim for 8-15 descriptive elements)
-6. Do NOT include the song name or artist name in the output
-7. Do NOT use phrases like "in the style of" or "similar to"
-8. Output ONLY the comma-separated style description, no quotes, no explanations
-9. Focus on the SPECIFIC characteristics of this particular song, not the artist's general style
-10. MAKE SURE you state the exact year of this song (or decade) (like "1993's [genre])
-11. NEVER WRITE ANY OTHER OUTPUT THAN THE style description. IF you don'w know which exact song is it refer to (like song name that is matching multiple songs), write the output about the most known song out of the options (but only for that song). 
-FORMAT RULES:
-- Comma-separated list
-- Start with main genre(s)
-- Include specific instruments and sounds used in THIS song
-- Describe vocal characteristics and delivery in THIS song
-- Add mood/feeling descriptors specific to THIS song
-- Include tempo and rhythm patterns
-- Mention production style and sonic qualities
-- Highlight unique elements that define THIS song
-- DO NOT INCLUDE ANY sub-element that not PERFECTLY matching this song, and can confuse the prompt
-- NEVER USE general description, "rock" can mean 1000 different sub-genres that not matching the same for different artist, be PERCISE.
-
-EXAMPLES OF GOOD settings for outputs (just inspirational, USE correct settings):
-Piano-driven pop, Joyful Gospel with choir vocals, clapping, and uplifting organ melody, Male vocals, 80s production, Melodic, Catchy hooks, Anthemic choruses
-Soul, Boy band, k-pop, [specific setting] band, Emotional, Torch-Lounge, Powerful female vocals, Gospel influences, Choir background vocals, Melancholic, Piano and strings
-Alternative Rock, Grunge, Dark, Melodic, Heavy guitar riffs, Baritone male vocals, 90s Seattle sound, Introspective
-EDM, Melodic, Euphoric, Build-ups and drops, Synth-heavy, Festival anthems, Emotional vocal samples, Progressive house
-happy choir, energetic soul, gospel, jazz, Christian choir, worship, rhythmical, blues, motown piano, funk pop, brass energetic section, eurodance 80's, disco soul, epic disco, funk, energetic trombones, strings stabs, energetic strings, syncopated piano, brass hits
-
-EXAMPLES OF BAD OUTPUT:
-Like Queen ❌
-Bohemian Rhapsody style ❌
-Rock ❌ (too vague)
-Great song ❌ (not descriptive)
-
-MAKE SURE IT PERFECTLY REPRESENTS THIS SPECIFIC SONG'S UNIQUE CHARACTERISTICS, NOT THE ARTIST'S GENERAL STYLE.
-
-Song: ${artistName}
-
-Generate ONLY the detailed, comma-separated style description for this specific song:`;
+    if (!promptTemplate) {
+      return res.status(500).json({ error: 'Prompt file not found' });
     }
+
+    // Replace placeholder with actual name
+    const placeholder = isArtist ? '{ARTIST_NAME}' : '{SONG_NAME}';
+    const systemPrompt = promptTemplate.replace(placeholder, artistName);
 
     res.json({ prompt: systemPrompt });
 
@@ -1090,6 +1063,52 @@ app.get('/', (req, res) => {
 });
 
 // Health check endpoint for Railway
+// ========== PROMPT MANAGEMENT ENDPOINTS ==========
+
+// Get prompts (read-only, no auth)
+app.get('/api/prompts', async (req, res) => {
+  try {
+    const artistPrompt = await readPrompt('artist');
+    const songPrompt = await readPrompt('song');
+
+    res.json({
+      artist: artistPrompt || '',
+      song: songPrompt || ''
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to read prompts' });
+  }
+});
+
+// Update prompt (requires password)
+app.post('/api/prompts', async (req, res) => {
+  try {
+    const { type, content, password } = req.body;
+
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!type || !content) {
+      return res.status(400).json({ error: 'Type and content are required' });
+    }
+
+    if (type !== 'artist' && type !== 'song') {
+      return res.status(400).json({ error: 'Type must be "artist" or "song"' });
+    }
+
+    const success = await writePrompt(type, content);
+
+    if (success) {
+      res.json({ message: `${type} prompt updated successfully` });
+    } else {
+      res.status(500).json({ error: 'Failed to save prompt' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update prompt' });
+  }
+});
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
