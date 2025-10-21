@@ -344,8 +344,8 @@ FORMAT RULES:
 
 EXAMPLES OF GOOD settings for outputs (just inspirational, USE correct settings):
 Piano-driven pop, Joyful Gospel with choir vocals, clapping, and uplifting organ melody, Male vocals, 80s production, Melodic, Catchy hooks, Anthemic choruses
-Soul, Emotional, Torch-Lounge, Powerful female vocals, Gospel influences, Choir background vocals, Melancholic, Piano and strings
-Alternative Rock, Grunge, Dark, Melodic, Heavy guitar riffs, Baritone male vocals, 90s Seattle sound, Introspective
+Soul, Emotional, [specific setting] artist, dou, Torch-Lounge, Powerful female vocals, Gospel influences, Choir background vocals, Melancholic, Piano and strings
+Alternative Rock, Boy band, k-pop, [specific setting] band, Grunge, Dark, Melodic, Heavy guitar riffs, Baritone male vocals, 90s Seattle sound, Introspective
 EDM, Melodic, Euphoric, Build-ups and drops, Synth-heavy, Festival anthems, Emotional vocal samples, Progressive house
 happy choir, energetic soul, gospel, jazz, Christian choir, worship, rhythmical, blues, motown piano, funk pop, brass energetic section, eurodance 80's, disco soul, epic disco, funk, energetic trombones, strings stabs, energetic strings, syncopated piano, brass hits
 EXAMPLES OF BAD OUTPUT:
@@ -389,7 +389,7 @@ FORMAT RULES:
 
 EXAMPLES OF GOOD settings for outputs (just inspirational, USE correct settings):
 Piano-driven pop, Joyful Gospel with choir vocals, clapping, and uplifting organ melody, Male vocals, 80s production, Melodic, Catchy hooks, Anthemic choruses
-Soul, Emotional, Torch-Lounge, Powerful female vocals, Gospel influences, Choir background vocals, Melancholic, Piano and strings
+Soul, Boy band, k-pop, [specific setting] band, Emotional, Torch-Lounge, Powerful female vocals, Gospel influences, Choir background vocals, Melancholic, Piano and strings
 Alternative Rock, Grunge, Dark, Melodic, Heavy guitar riffs, Baritone male vocals, 90s Seattle sound, Introspective
 EDM, Melodic, Euphoric, Build-ups and drops, Synth-heavy, Festival anthems, Emotional vocal samples, Progressive house
 happy choir, energetic soul, gospel, jazz, Christian choir, worship, rhythmical, blues, motown piano, funk pop, brass energetic section, eurodance 80's, disco soul, epic disco, funk, energetic trombones, strings stabs, energetic strings, syncopated piano, brass hits
