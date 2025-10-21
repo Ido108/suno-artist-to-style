@@ -16,82 +16,235 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
-            border-radius: 20px;
+            border-radius: 12px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: hidden;
+            height: calc(100vh - 20px);
+            display: flex;
+            flex-direction: column;
         }
 
+        /* COMPACT HEADER */
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
-            text-align: center;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
         }
 
         .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            font-size: 1.3em;
+            margin: 0;
         }
 
         .header p {
             opacity: 0.9;
-            font-size: 1.1em;
+            font-size: 0.85em;
+            margin: 0;
         }
 
-        .controls {
-            padding: 30px;
+        /* MAIN LAYOUT */
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* COLLAPSIBLE SIDEBAR */
+        .sidebar {
+            width: 0;
             background: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
+            border-left: 1px solid #dee2e6;
+            overflow: hidden;
+            transition: width 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
 
-        .form-group {
+        .sidebar.open {
+            width: 320px;
+        }
+
+        .sidebar-content {
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .sidebar-section {
             margin-bottom: 20px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
         }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
+        .sidebar-section h3 {
+            font-size: 0.95em;
+            margin-bottom: 10px;
             color: #495057;
         }
 
-        input, textarea {
+        .sidebar-section .btn {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #dee2e6;
+            margin-bottom: 6px;
+            font-size: 13px;
+            padding: 8px 12px;
+        }
+
+        /* SETTINGS TOGGLE BUTTON */
+        .settings-toggle {
+            position: absolute;
+            right: 15px;
+            top: 80px;
+            z-index: 100;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
             border-radius: 8px;
-            font-size: 16px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .settings-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        /* MAIN AREA */
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* COMPACT STATS BAR */
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            flex-shrink: 0;
+        }
+
+        .stat-card {
+            text-align: center;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .stat-number {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.85em;
+        }
+
+        /* COMPACT ADD FORM */
+        .add-form {
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            flex-shrink: 0;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .form-row label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #495057;
+            margin: 0;
+        }
+
+        .type-selector {
+            display: flex;
+            gap: 12px;
+        }
+
+        .type-selector label {
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: 400;
+        }
+
+        .type-selector input[type="radio"] {
+            margin-left: 4px;
+            width: auto;
+        }
+
+        input, textarea, select {
+            padding: 6px 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 13px;
             transition: all 0.3s;
             font-family: inherit;
         }
 
-        input:focus, textarea:focus {
+        input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
         }
 
         textarea {
             resize: vertical;
-            min-height: 100px;
+            min-height: 50px;
         }
 
+        .name-input-row {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+        }
+
+        .name-input-row input {
+            flex: 1;
+        }
+
+        .style-input {
+            width: 100%;
+        }
+
+        /* SMALL BUTTONS */
         .btn {
-            padding: 12px 24px;
+            padding: 6px 12px;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 6px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
-            margin-left: 10px;
+            white-space: nowrap;
         }
 
         .btn-primary {
@@ -100,8 +253,8 @@
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
         }
 
         .btn-danger {
@@ -122,23 +275,64 @@
             background: #218838;
         }
 
-        .search-bar {
-            margin-bottom: 20px;
+        .btn-ai {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
         }
 
-        .artists-list {
-            padding: 30px;
-            max-height: 600px;
-            overflow-y: auto;
+        .btn-ai:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(240, 147, 251, 0.4);
         }
 
-        .search-bar {
-            position: sticky;
-            top: 0;
+        /* SEARCH AND FILTERS */
+        .search-section {
+            padding: 12px 20px;
             background: white;
-            padding: 15px 0;
-            z-index: 10;
-            margin-bottom: 20px;
+            border-bottom: 1px solid #dee2e6;
+            flex-shrink: 0;
+        }
+
+        .search-bar {
+            margin-bottom: 8px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 8px 12px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+            font-size: 13px;
+        }
+
+        .filters select {
+            padding: 5px 10px;
+            width: auto;
+        }
+
+        .display-indicator {
+            color: #667eea;
+            font-weight: 600;
+            white-space: nowrap;
+            font-size: 13px;
+        }
+
+        .filters .btn {
+            font-size: 12px;
+            padding: 5px 10px;
+        }
+
+        /* ARTISTS LIST - THE STAR */
+        .artists-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px 20px;
+            background: white;
         }
 
         .artist-card {
@@ -217,33 +411,12 @@
             min-width: 32px;
         }
 
-        .stats {
-            display: flex;
-            justify-content: space-around;
-            padding: 20px;
-            background: #f8f9fa;
-        }
-
-        .stat-card {
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 2.5em;
-            font-weight: 700;
-            color: #667eea;
-        }
-
-        .stat-label {
-            color: #6c757d;
-            margin-top: 5px;
-        }
-
         .alert {
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
             font-weight: 500;
+            font-size: 0.9em;
         }
 
         .alert-success {
@@ -265,15 +438,14 @@
         .toggle-container {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 10px;
         }
 
         .switch {
             position: relative;
             display: inline-block;
-            width: 60px;
-            height: 34px;
+            width: 50px;
+            height: 28px;
         }
 
         .switch input {
@@ -291,14 +463,14 @@
             bottom: 0;
             background-color: #ccc;
             transition: .4s;
-            border-radius: 34px;
+            border-radius: 28px;
         }
 
         .slider:before {
             position: absolute;
             content: "";
-            height: 26px;
-            width: 26px;
+            height: 20px;
+            width: 20px;
             left: 4px;
             bottom: 4px;
             background-color: white;
@@ -311,50 +483,19 @@
         }
 
         input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-
-        .api-settings {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .api-settings h3 {
-            color: #856404;
-            margin-bottom: 15px;
-            font-size: 1.2em;
-        }
-
-        select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s;
-            font-family: inherit;
-            background: white;
-        }
-
-        select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateX(22px);
         }
 
         .form-check {
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-top: 8px;
+            gap: 6px;
+            margin-top: 6px;
         }
 
         .form-check input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             cursor: pointer;
         }
 
@@ -362,15 +503,16 @@
             margin: 0;
             cursor: pointer;
             font-weight: 400;
+            font-size: 0.85em;
         }
 
         .form-note {
-            font-size: 0.85em;
+            font-size: 0.8em;
             color: #6c757d;
-            margin-top: 5px;
+            margin-top: 3px;
         }
 
-        /* Progress Modal */
+        /* MODALS */
         .progress-modal {
             display: none;
             position: fixed;
@@ -401,6 +543,26 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
 
+        /* PROMPT EDITOR MODAL - MUCH LARGER */
+        #promptEditorModal .progress-panel,
+        #jsonEditorModal .progress-panel {
+            max-width: 90%;
+            max-height: 85vh;
+        }
+
+        #promptEditorModal .progress-panel textarea,
+        #jsonEditorModal .progress-panel textarea {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            resize: none;
+            background: #f8f9fa;
+            color: #2d3748;
+        }
+
         .progress-header {
             margin-bottom: 20px;
         }
@@ -408,6 +570,7 @@
         .progress-header h2 {
             color: #2d3748;
             margin-bottom: 10px;
+            font-size: 1.3em;
         }
 
         .progress-stats {
@@ -531,218 +694,341 @@
             justify-content: flex-end;
             gap: 10px;
         }
+
+        .progress-footer .btn {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        /* API Settings in Sidebar */
+        .api-settings-sidebar {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .api-settings-sidebar h3 {
+            color: #856404;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        .api-indicator {
+            font-size: 0.8em;
+            color: #856404;
+            margin-bottom: 8px;
+        }
+
+        .form-group-sidebar {
+            margin-bottom: 10px;
+        }
+
+        .form-group-sidebar label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.85em;
+        }
+
+        .form-group-sidebar select,
+        .form-group-sidebar input {
+            width: 100%;
+            padding: 6px 8px;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
     <!-- Login Screen -->
     <div id="loginScreen" class="container">
         <div class="header">
-            <h1>🎵 Suno Artist Manager</h1>
-            <p>Login Required</p>
+            <div>
+                <h1>🎵 Suno Artist Manager</h1>
+                <p>Login Required</p>
+            </div>
         </div>
 
-        <div class="controls">
+        <div style="padding: 30px;">
             <div id="loginAlertContainer"></div>
 
-            <div class="form-group">
-                <label for="loginPassword">Enter Password:</label>
-                <input type="password" id="loginPassword" placeholder="Enter password" autofocus>
+            <div style="margin-bottom: 20px;">
+                <label for="loginPassword" style="display: block; margin-bottom: 8px; font-weight: 600;">Enter Password:</label>
+                <input type="password" id="loginPassword" placeholder="Enter password" autofocus style="width: 100%; padding: 12px;">
             </div>
 
             <div>
-                <button class="btn btn-primary" onclick="login()" id="loginBtn">🔓 Login</button>
+                <button class="btn btn-primary" onclick="login()" id="loginBtn" style="padding: 12px 24px; font-size: 16px;">🔓 Login</button>
             </div>
         </div>
     </div>
 
     <!-- Main App (hidden by default) -->
     <div id="mainApp" class="container" style="display: none;">
+        <!-- Compact Header -->
         <div class="header">
-            <h1>🎵 Suno Artist Manager</h1>
+            <div>
+                <h1>🎵 Suno Artist Manager</h1>
+            </div>
             <p>ניהול מאגר אמנים וסטיילים למוזיקה</p>
         </div>
 
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-number" id="totalArtists">0</div>
-                <div class="stat-label">סה״כ אמנים</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="totalSongs">0</div>
-                <div class="stat-label">סה״כ שירים</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="enabledStatus">-</div>
-                <div class="stat-label">סטטוס</div>
-            </div>
-        </div>
+        <!-- Settings Toggle Button -->
+        <button class="settings-toggle" onclick="toggleSidebar()">
+            <span id="settingsToggleText">⚙️ Settings</span>
+        </button>
 
-        <div class="controls">
-            <div id="alertContainer"></div>
-
-            <div class="toggle-container">
-                <label>
-                    <strong>הפעל/כבה את המערכת:</strong>
-                </label>
-                <label class="switch">
-                    <input type="checkbox" id="enableToggle">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="api-settings">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h3 style="margin: 0;">🤖 הגדרות AI Generator</h3>
-                    <div style="display: flex; gap: 15px; align-items: center;">
-                        <div style="font-size: 0.85em; color: #856404;" id="adminApiIndicator">
-                            -
-                        </div>
-                        <a href="#" id="toggleAdminApiSettings" style="color: #856404; font-size: 0.9em; text-decoration: underline;">
-                            הגדרות ▼
-                        </a>
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Main Area -->
+            <div class="main-area">
+                <!-- Compact Stats Bar -->
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalArtists">0</div>
+                        <div class="stat-label">סה״כ אמנים</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalSongs">0</div>
+                        <div class="stat-label">סה״כ שירים</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="enabledStatus">-</div>
+                        <div class="stat-label">סטטוס</div>
                     </div>
                 </div>
 
-                <div id="adminApiSettingsSection" style="display: none;">
-                    <div class="form-group">
-                        <label for="aiProvider">AI Provider:</label>
-                        <select id="aiProvider" onchange="updateModelDropdown()">
-                            <option value="google" selected>🌐 Google (Gemini)</option>
-                            <option value="anthropic">🤖 Anthropic (Claude)</option>
-                            <option value="openai">💬 OpenAI (GPT)</option>
-                            <option value="xai">✖️ X.AI (Grok)</option>
-                        </select>
+                <!-- Compact Add Form -->
+                <div class="add-form">
+                    <div id="alertContainer"></div>
+
+                    <div class="form-row">
+                        <label>סוג:</label>
+                        <div class="type-selector">
+                            <label>
+                                <input type="radio" name="entry-type" value="artist" checked onchange="updateEntryTypeUI()">
+                                <span>🎤 אמן</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="entry-type" value="song" onchange="updateEntryTypeUI()">
+                                <span>🎵 שיר</span>
+                            </label>
+                        </div>
+                        <div class="name-input-row">
+                            <input type="text" id="artistName" placeholder="לדוגמה: Billy Joel">
+                            <button class="btn btn-ai" onclick="generateStyle()" id="generateBtn">
+                                🤖 AI Generator
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="llmProvider">Model:</label>
-                        <select id="llmProvider">
-                            <!-- Populated dynamically based on provider -->
-                        </select>
+                    <div class="form-row">
+                        <label for="artistStyle" id="styleLabel">תיאור הסטייל:</label>
+                        <textarea id="artistStyle" class="style-input" placeholder="לדוגמה: Pop, Rock, Storytelling, piano-driven, male vocals, upbeat"></textarea>
                     </div>
 
-                    <div class="form-group">
-                        <label for="apiKey">API Key:</label>
-                        <input type="password" id="apiKey" placeholder="הדבק את ה-API key שלך כאן">
-                        <p class="form-note" id="apiKeyNote">הזן את ה-API key שלך למודל שבחרת.</p>
+                    <div class="form-row" style="justify-content: space-between;">
                         <div class="form-check">
-                            <input type="checkbox" id="saveApiKey" checked>
-                            <label for="saveApiKey">שמור API key בדפדפן (רק במכשיר הזה)</label>
+                            <input type="checkbox" id="regenerateExisting" checked>
+                            <label for="regenerateExisting" id="regenerateLabel">
+                                🔄 Regenerate existing? (אם לא מסומן, ידלג על קיימים)
+                            </label>
+                        </div>
+                        <div style="display: flex; gap: 6px;">
+                            <button class="btn btn-primary" onclick="saveEntry()" id="saveBtn">💾 שמור/עדכן</button>
+                            <button class="btn btn-success" onclick="loadArtists()">🔄 רענן</button>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label style="display: block; margin-bottom: 8px;">סוג:</label>
-                <div style="display: flex; gap: 16px; margin-bottom: 12px;">
-                    <label style="display: inline-flex; align-items: center; cursor: pointer;">
-                        <input type="radio" name="entry-type" value="artist" checked onchange="updateEntryTypeUI()" style="margin-left: 6px; width: auto;">
-                        <span>🎤 אמן</span>
-                    </label>
-                    <label style="display: inline-flex; align-items: center; cursor: pointer;">
-                        <input type="radio" name="entry-type" value="song" onchange="updateEntryTypeUI()" style="margin-left: 6px; width: auto;">
-                        <span>🎵 שיר</span>
-                    </label>
+                <!-- Search and Filters -->
+                <div class="search-section">
+                    <div class="search-bar">
+                        <input type="text" id="searchInput" placeholder="🔍 חפש אמן או שיר..." onkeyup="filterArtists()">
+                    </div>
+                    <div class="filters">
+                        <button class="btn btn-primary" onclick="sortArtists('name')">🔤 Name</button>
+                        <button class="btn btn-success" onclick="sortArtists('recent')">🕐 Recent</button>
+                        <select id="genreFilter" onchange="filterByGenre()">
+                            <option value="">All Genres</option>
+                        </select>
+                        <div class="display-indicator" id="displayIndicator">Showing: 0 | Selected: 0</div>
+                        <div style="flex: 1"></div>
+                        <button class="btn" onclick="selectAllVisible()" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white;">☑️ Select All</button>
+                        <button class="btn" onclick="deselectAll()" style="background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white;">◻️ Deselect All</button>
+                        <button class="btn" onclick="regenerateSelected()" id="regenerateSelectedBtn" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;" disabled>
+                            🔄 Regenerate Selected (<span id="selectedCount">0</span>)
+                        </button>
+                        <button class="btn btn-danger" onclick="regenerateAll()">🔥 Regenerate All</button>
+                    </div>
+                </div>
+
+                <!-- Artists List - THE STAR -->
+                <div class="artists-list" id="artistsList">
+                    <!-- Artist cards will be added here dynamically -->
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="artistName" id="nameLabel">שם האמן:</label>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <input type="text" id="artistName" placeholder="לדוגמה: Billy Joel" style="flex: 1;">
-                    <button class="btn btn-ai" onclick="generateStyle()" id="generateBtn" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; white-space: nowrap;">
-                        🤖 AI Generator
-                    </button>
-                </div>
-                <div class="form-check" style="margin-top: 8px;">
-                    <input type="checkbox" id="regenerateExisting" checked>
-                    <label for="regenerateExisting" id="regenerateLabel" style="font-weight: 400; font-size: 0.9em; color: #6c757d;">
-                        🔄 Regenerate existing artists? (אם לא מסומן, ידלג על אמנים קיימים)
-                    </label>
-                </div>
-            </div>
+            <!-- Collapsible Sidebar (starts closed) -->
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-content">
+                    <!-- System Toggle -->
+                    <div class="sidebar-section">
+                        <h3>System Control</h3>
+                        <div class="toggle-container">
+                            <label style="font-weight: 600; font-size: 0.9em;">הפעל/כבה:</label>
+                            <label class="switch">
+                                <input type="checkbox" id="enableToggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
 
-            <div class="form-group">
-                <label for="artistStyle">תיאור הסטייל (מפורט):</label>
-                <textarea id="artistStyle" placeholder="לדוגמה: Pop, Rock, Storytelling, piano-driven, male vocals, upbeat"></textarea>
-            </div>
+                    <!-- AI Generator Settings -->
+                    <div class="sidebar-section api-settings-sidebar">
+                        <h3>🤖 AI Generator Settings</h3>
+                        <div class="api-indicator" id="adminApiIndicator">-</div>
 
-            <div>
-                <button class="btn btn-primary" onclick="saveEntry()" id="saveBtn">💾 שמור/עדכן אמן</button>
-                <button class="btn btn-success" onclick="loadArtists()">🔄 רענן רשימה</button>
-            </div>
+                        <div class="form-group-sidebar">
+                            <label for="aiProvider">Provider:</label>
+                            <select id="aiProvider" onchange="updateModelDropdown()">
+                                <option value="google" selected>🌐 Google (Gemini)</option>
+                                <option value="anthropic">🤖 Anthropic (Claude)</option>
+                                <option value="openai">💬 OpenAI (GPT)</option>
+                                <option value="xai">✖️ X.AI (Grok)</option>
+                            </select>
+                        </div>
 
-            <div style="margin-top: 20px; padding: 20px; background: #e7f3ff; border: 2px solid #667eea; border-radius: 12px;">
-                <h3 style="color: #004085; margin-bottom: 15px; font-size: 1.1em;">✨ ניהול Prompts</h3>
-                <p style="font-size: 0.85em; color: #004085; margin-bottom: 15px;">
-                    ערוך את ה-prompts שה-AI משתמש בהם ליצירת סגנונות
-                </p>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn" onclick="openPromptEditor('artist')" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                        🎤 Edit Artist Prompt
-                    </button>
-                    <button class="btn" onclick="openPromptEditor('song')" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
-                        🎵 Edit Song Prompt
-                    </button>
+                        <div class="form-group-sidebar">
+                            <label for="llmProvider">Model:</label>
+                            <select id="llmProvider" onchange="updateAdminApiIndicator()">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+
+                        <div class="form-group-sidebar">
+                            <label for="apiKey">API Key:</label>
+                            <input type="password" id="apiKey" placeholder="הדבק את ה-API key שלך כאן" onchange="updateAdminApiIndicator()">
+                            <p class="form-note" id="apiKeyNote">הזן את ה-API key שלך למודל שבחרת.</p>
+                            <div class="form-check">
+                                <input type="checkbox" id="saveApiKey" checked>
+                                <label for="saveApiKey">שמור API key בדפדפן</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prompts Management -->
+                    <div class="sidebar-section">
+                        <h3>✨ Prompts Management</h3>
+                        <button class="btn btn-primary" onclick="openPromptEditor('artist')">
+                            🎤 Edit Artist Prompt
+                        </button>
+                        <button class="btn" onclick="openPromptEditor('song')" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                            🎵 Edit Song Prompt
+                        </button>
+                    </div>
+
+                    <!-- JSON Management -->
+                    <div class="sidebar-section">
+                        <h3>📁 JSON Management</h3>
+                        <button class="btn" onclick="downloadJSON()" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white;">
+                            📥 Download
+                        </button>
+                        <button class="btn btn-primary" onclick="openJsonEditor()">
+                            ✏️ Edit
+                        </button>
+                        <button class="btn btn-success" onclick="document.getElementById('uploadJsonInput').click()">
+                            📤 Upload
+                        </button>
+                        <button class="btn btn-danger" onclick="clearAllArtists()">
+                            🗑️ Clear All
+                        </button>
+                        <input type="file" id="uploadJsonInput" accept=".json" style="display: none;" onchange="handleJsonUpload(event)">
+                        <p class="form-note" style="margin-top: 8px;">⚠️ כל פעולה יוצרת backup אוטומטי</p>
+                    </div>
                 </div>
-            </div>
-
-            <div style="margin-top: 20px; padding: 20px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px;">
-                <h3 style="color: #856404; margin-bottom: 15px; font-size: 1.1em;">📁 ניהול קובץ JSON</h3>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn" onclick="downloadJSON()" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white;">
-                        📥 Download JSON
-                    </button>
-                    <button class="btn" onclick="openJsonEditor()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                        ✏️ Edit JSON
-                    </button>
-                    <button class="btn" onclick="document.getElementById('uploadJsonInput').click()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
-                        📤 Upload JSON
-                    </button>
-                    <button class="btn" onclick="clearAllArtists()" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white;">
-                        🗑️ Clear All
-                    </button>
-                </div>
-                <input type="file" id="uploadJsonInput" accept=".json" style="display: none;" onchange="handleJsonUpload(event)">
-                <p style="font-size: 0.85em; color: #856404; margin-top: 10px; margin-bottom: 0;">
-                    ⚠️ כל פעולה יוצרת backup אוטומטי
-                </p>
             </div>
         </div>
+    </div>
 
-        <div class="artists-list">
-            <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="🔍 חפש אמן..." onkeyup="filterArtists()">
-                <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                    <button class="btn btn-primary" onclick="sortArtists('name')" style="font-size: 13px; padding: 6px 12px;">
-                        🔤 Name
-                    </button>
-                    <button class="btn btn-success" onclick="sortArtists('recent')" style="font-size: 13px; padding: 6px 12px;">
-                        🕐 Recent
-                    </button>
-                    <select id="genreFilter" onchange="filterByGenre()" style="font-size: 13px; padding: 6px 12px; width: auto;">
-                        <option value="">All Genres</option>
-                    </select>
-                    <div style="font-size: 13px; color: #667eea; font-weight: 600; white-space: nowrap;" id="displayIndicator">
-                        Showing: 0 | Selected: 0
+    <!-- Progress Modal -->
+    <div id="progressModal" class="progress-modal">
+        <div class="progress-panel">
+            <div class="progress-header">
+                <h2>🤖 AI Generation Progress</h2>
+                <div class="progress-stats">
+                    <div class="progress-stat stat-total">
+                        Total: <span id="statTotal">0</span>
                     </div>
-                    <div style="flex: 1"></div>
-                    <button class="btn" onclick="selectAllVisible()" style="font-size: 13px; padding: 6px 12px; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white;">
-                        ☑️ Select All
-                    </button>
-                    <button class="btn" onclick="deselectAll()" style="font-size: 13px; padding: 6px 12px; background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); color: white;">
-                        ◻️ Deselect All
-                    </button>
-                    <button class="btn" onclick="regenerateSelected()" id="regenerateSelectedBtn" style="font-size: 13px; padding: 6px 12px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;" disabled>
-                        🔄 Regenerate Selected (<span id="selectedCount">0</span>)
-                    </button>
-                    <button class="btn btn-danger" onclick="regenerateAll()" style="font-size: 13px; padding: 6px 12px;">
-                        🔥 Regenerate All
-                    </button>
+                    <div class="progress-stat stat-new">
+                        New: <span id="statNew">0</span>
+                    </div>
+                    <div class="progress-stat stat-existing">
+                        Existing: <span id="statExisting">0</span>
+                    </div>
+                    <div class="progress-stat stat-skip">
+                        Will Skip: <span id="statSkip">0</span>
+                    </div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar" style="width: 0%">0%</div>
                 </div>
             </div>
-            <div id="artistsList"></div>
+            <div class="progress-list" id="progressList">
+                <!-- Progress items will be added here dynamically -->
+            </div>
+            <div class="progress-footer">
+                <button class="btn btn-primary" id="closeProgressBtn" onclick="closeProgressModal()" style="display: none;">
+                    ✅ Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSON Editor Modal -->
+    <div id="jsonEditorModal" class="progress-modal">
+        <div class="progress-panel">
+            <div class="progress-header">
+                <h2>✏️ Edit JSON Database</h2>
+                <p style="color: #6c757d; font-size: 0.9em; margin-top: 8px;">
+                    Direct edit of artist_styles.json - Be careful! A backup will be created automatically.
+                </p>
+            </div>
+            <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+                <textarea id="jsonEditorTextarea"></textarea>
+            </div>
+            <div class="progress-footer" style="margin-top: 20px;">
+                <button class="btn" onclick="closeJsonEditor()" style="background: #6c757d; color: white;">
+                    ✖️ Cancel
+                </button>
+                <button class="btn btn-primary" id="saveJsonBtn" onclick="saveEditedJson()">
+                    💾 Save JSON
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompt Editor Modal - MUCH LARGER -->
+    <div id="promptEditorModal" class="progress-modal">
+        <div class="progress-panel">
+            <div class="progress-header">
+                <h2 id="promptEditorTitle">✏️ Edit Prompt</h2>
+                <p style="color: #6c757d; font-size: 0.9em; margin-top: 8px;" id="promptEditorDesc">
+                    Edit the AI prompt template. Use {ARTIST_NAME} or {SONG_NAME} as placeholder.
+                </p>
+            </div>
+            <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+                <textarea id="promptEditorTextarea"></textarea>
+            </div>
+            <div class="progress-footer" style="margin-top: 20px;">
+                <button class="btn" onclick="closePromptEditor()" style="background: #6c757d; color: white;">
+                    ✖️ Cancel
+                </button>
+                <button class="btn btn-primary" id="savePromptBtn" onclick="savePrompt()">
+                    💾 Save Prompt
+                </button>
+            </div>
         </div>
     </div>
 
@@ -753,6 +1039,18 @@
         let sessionPassword = ''; // Store password for session
         let selectedArtists = new Set(); // Track selected artists
         let lastClickedIndex = null; // For shift-click selection
+
+        // Sidebar toggle function
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleText = document.getElementById('settingsToggleText');
+            sidebar.classList.toggle('open');
+            if (sidebar.classList.contains('open')) {
+                toggleText.textContent = '✖️ Close';
+            } else {
+                toggleText.textContent = '⚙️ Settings';
+            }
+        }
 
         // Login function
         async function login() {
@@ -782,7 +1080,7 @@
 
                 // Hide login screen
                 document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainApp').style.display = 'block';
+                document.getElementById('mainApp').style.display = 'flex';
 
                 // Initialize the app
                 initializeApp();
@@ -807,7 +1105,7 @@
             if (savedPassword) {
                 sessionPassword = savedPassword;
                 document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainApp').style.display = 'block';
+                document.getElementById('mainApp').style.display = 'flex';
                 initializeApp();
                 loadArtists();
                 initializeApiSettings();
@@ -824,6 +1122,7 @@
                     }
                 });
             }
+            checkLogin();
         });
 
         function showLoginAlert(message, type) {
@@ -995,1273 +1294,312 @@
         function initializeApp() {
             // Setup toggle listener
             setupToggleListener();
-
-            // Toggle admin API settings
-            const toggleAdminApiSettings = document.getElementById('toggleAdminApiSettings');
-            const adminApiSettingsSection = document.getElementById('adminApiSettingsSection');
-
-            toggleAdminApiSettings.addEventListener('click', function(e) {
-                e.preventDefault();
-                const isVisible = adminApiSettingsSection.style.display !== 'none';
-                adminApiSettingsSection.style.display = isVisible ? 'none' : 'block';
-                this.textContent = isVisible ? 'הגדרות ▼' : 'הגדרות ▲';
-            });
-
-            // Event listeners for API settings
-            const aiProviderDropdown = document.getElementById('aiProvider');
-            const llmProviderDropdown = document.getElementById('llmProvider');
-            const apiKeyInput = document.getElementById('apiKey');
-            const saveApiKeyCheckbox = document.getElementById('saveApiKey');
-
-            llmProviderDropdown.addEventListener('change', function() {
-                // Save selected model
-                localStorage.setItem('llmProvider', this.value);
-                updateAdminApiIndicator();
-            });
-
-            apiKeyInput.addEventListener('input', function() {
-                updateAdminApiIndicator();
-            });
-
-            apiKeyInput.addEventListener('blur', function() {
-                // Auto-save if checkbox is checked
-                if (saveApiKeyCheckbox.checked && this.value.trim()) {
-                    const provider = aiProviderDropdown.value;
-                    localStorage.setItem(`apiKey_${provider}`, this.value.trim());
-                    localStorage.setItem('aiProvider', provider);
-                    localStorage.setItem('llmProvider', llmProviderDropdown.value);
-                    showAlert('API key נשמר בדפדפן ✓', 'success');
-                    updateAdminApiIndicator();
-                }
-            });
-
-            saveApiKeyCheckbox.addEventListener('change', function() {
-                const provider = aiProviderDropdown.value;
-                const key = apiKeyInput.value.trim();
-
-                if (this.checked && key) {
-                    localStorage.setItem(`apiKey_${provider}`, key);
-                    localStorage.setItem('aiProvider', provider);
-                    localStorage.setItem('llmProvider', llmProviderDropdown.value);
-                    showAlert('API key נשמר בדפדפן', 'success');
-                } else if (!this.checked) {
-                    // Clear saved key
-                    localStorage.removeItem(`apiKey_${provider}`);
-                    showAlert('API key הוסר מהדפדפן', 'success');
-                }
-                updateAdminApiIndicator();
-            });
-
-            // Indicator will be updated by initializeApiSettings()
         }
 
-        // Load artists on page load
-        window.addEventListener('DOMContentLoaded', () => {
-            // Check if already logged in
-            checkLogin();
-        });
+        function setupToggleListener() {
+            const toggle = document.getElementById('enableToggle');
+            toggle.addEventListener('change', async function() {
+                const enabled = this.checked;
+
+                try {
+                    const response = await fetch(`${API_URL}/api/enabled`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            enabled,
+                            password: sessionPassword
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        showAlert(`המערכת ${enabled ? 'הופעלה' : 'כובתה'} בהצלחה!`, 'success');
+                        updateStats();
+                    } else {
+                        throw new Error(result.error || 'Failed to update');
+                    }
+                } catch (error) {
+                    showAlert('שגיאה: ' + error.message, 'error');
+                    this.checked = !enabled; // Revert on error
+                }
+            });
+        }
 
         async function loadArtists() {
             try {
                 const response = await fetch(`${API_URL}/api/artists`);
-                artistsData = await response.json();
+                const data = await response.json();
 
-                updateStats();
+                artistsData = data;
+
                 displayArtists();
-                updateToggle();
+                updateStats();
+                populateGenreFilter();
+
             } catch (error) {
-                showAlert('שגיאה בטעינת האמנים', 'error');
+                showAlert('שגיאה בטעינת נתונים: ' + error.message, 'error');
             }
         }
 
-        function updateStats() {
-            document.getElementById('totalArtists').textContent = Object.keys(artistsData.artists || {}).length;
-            document.getElementById('totalSongs').textContent = Object.keys(artistsData.songs || {}).length;
-            document.getElementById('enabledStatus').textContent = artistsData.enabled ? '✅ פעיל' : '❌ כבוי';
-        }
-
-        // Update UI when entry type changes
-        function updateEntryTypeUI() {
-            const entryType = document.querySelector('input[name="entry-type"]:checked').value;
-            const isArtist = entryType === 'artist';
-
-            document.getElementById('nameLabel').textContent = isArtist ? 'שם האמן:' : 'שם השיר:';
-            document.getElementById('artistName').placeholder = isArtist ? 'לדוגמה: Billy Joel' : 'לדוגמה: Bohemian Rhapsody';
-            document.getElementById('regenerateLabel').textContent = isArtist
-                ? '🔄 Regenerate existing artists? (אם לא מסומן, ידלג על אמנים קיימים)'
-                : '🔄 Regenerate existing songs? (אם לא מסומן, ידלג על שירים קיימים)';
-            document.getElementById('saveBtn').textContent = isArtist ? '💾 שמור/עדכן אמן' : '💾 שמור/עדכן שיר';
-        }
-
-        function updateToggle() {
-            document.getElementById('enableToggle').checked = artistsData.enabled;
-        }
-
-        let currentSort = 'name'; // Default sort
-        let currentGenreFilter = ''; // Current genre filter
-        let currentSearchTerm = ''; // Track current search term
-
-        function displayArtists(highlightArtist = null) {
+        function displayArtists() {
             const artistsList = document.getElementById('artistsList');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedGenre = document.getElementById('genreFilter').value;
 
-            // Get both artists and songs
-            let artists = Object.entries(artistsData.artists || {}).map(([name, style]) => ({name, style, type: 'artist'}));
-            let songs = Object.entries(artistsData.songs || {}).map(([name, style]) => ({name, style, type: 'song'}));
-            let allEntries = [...artists, ...songs];
+            const entries = Object.entries(artistsData.artists || {});
 
-            if (allEntries.length === 0) {
-                artistsList.innerHTML = '<p style="text-align: center; color: #6c757d;">אין אמנים או שירים במאגר</p>';
-                return;
-            }
-
-            // Add timestamps from metadata
-            const entriesWithMeta = allEntries.map(entry => {
-                const timestamp = entry.type === 'artist'
-                    ? artistsData.metadata?.[entry.name]?.timestamp || 0
-                    : artistsData.metadata?.songs?.[entry.name]?.timestamp || 0;
-                return [entry.name, entry.style, timestamp, entry.type];
+            let filteredEntries = entries.filter(([name, data]) => {
+                const matchesSearch = name.toLowerCase().includes(searchTerm) ||
+                                    (data.style && data.style.toLowerCase().includes(searchTerm));
+                const matchesGenre = !selectedGenre || (data.style && data.style.toLowerCase().includes(selectedGenre.toLowerCase()));
+                return matchesSearch && matchesGenre;
             });
 
-            // Sort based on current sort mode
-            if (currentSort === 'name') {
-                entriesWithMeta.sort((a, b) => a[0].localeCompare(b[0]));
-            } else if (currentSort === 'recent') {
-                entriesWithMeta.sort((a, b) => b[2] - a[2]); // Newest first
-            }
-
-            // Build genre list
-            updateGenreFilter(entriesWithMeta);
-
-            artistsList.innerHTML = entriesWithMeta.map(([name, style, timestamp, type], index) => {
+            artistsList.innerHTML = filteredEntries.map(([name, data], index) => {
                 const isSelected = selectedArtists.has(name);
-                const isHighlighted = highlightArtist === name;
-                const typeIcon = type === 'song' ? '🎵' : '🎤';
-                const typeLabel = type === 'song' ? 'שיר' : 'אמן';
+                const type = data.type || 'artist';
+                const icon = type === 'song' ? '🎵' : '🎤';
+
                 return `
-                <div class="artist-card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}" data-name="${name}" data-index="${index}" data-genre="${getGenreFromStyle(style)}" data-type="${type}">
-                    <input type="checkbox" class="artist-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleArtistSelection('${escapeHtml(name)}', event)" onclick="handleCheckboxClick(event, ${index})">
-                    <div class="artist-info" onclick="toggleArtistDetails('${escapeHtml(name)}')">
-                        <div class="artist-name">${typeIcon} ${name}</div>
-                        <div class="artist-style" title="${escapeHtml(style)}">${style}</div>
-                        <div class="artist-details" id="details-${escapeHtml(name)}" style="display: none;">
-                            <textarea class="edit-textarea" id="edit-${escapeHtml(name)}" data-type="${type}" style="width: 100%; margin-top: 10px; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; font-size: 0.9em;">${escapeHtml(style)}</textarea>
-                            <button class="btn btn-primary" onclick="saveInlineEdit('${escapeHtml(name)}', '${type}'); event.stopPropagation();" style="margin-top: 8px; padding: 4px 12px; font-size: 0.85em;">💾 שמור</button>
+                    <div class="artist-card ${isSelected ? 'selected' : ''}" data-name="${name}" data-index="${index}">
+                        <input type="checkbox" class="artist-checkbox"
+                               ${isSelected ? 'checked' : ''}
+                               onchange="toggleArtistSelection('${name.replace(/'/g, "\\'")}', event)"
+                               onclick="event.stopPropagation()">
+                        <div class="artist-info" onclick="selectArtist('${name.replace(/'/g, "\\'")}')">
+                            <div class="artist-name">${icon} ${name}</div>
+                            <div class="artist-style">${data.style || 'אין תיאור'}</div>
+                        </div>
+                        <div class="artist-actions">
+                            <button class="btn btn-primary" onclick="editArtist('${name.replace(/'/g, "\\'")}'); event.stopPropagation();" title="ערוך">✏️</button>
+                            <button class="btn btn-danger" onclick="deleteArtist('${name.replace(/'/g, "\\'")}'); event.stopPropagation();" title="מחק">🗑️</button>
                         </div>
                     </div>
-                    <div class="artist-actions">
-                        <button class="btn btn-primary" onclick="editEntry('${escapeHtml(name)}', '${escapeHtml(style)}', '${type}')">✏️</button>
-                        <button class="btn btn-success" onclick="regenerateEntry('${escapeHtml(name)}', '${type}')">🔄</button>
-                        <button class="btn btn-danger" onclick="deleteEntry('${escapeHtml(name)}', '${type}')">🗑️</button>
-                    </div>
-                </div>
-            `}).join('');
+                `;
+            }).join('');
 
-            // Apply genre filter if active
-            if (currentGenreFilter) {
-                filterByGenre();
-            }
-
-            // Apply search filter if active
-            if (currentSearchTerm) {
-                applySearchFilter();
-            }
-
-            // Scroll to highlighted artist
-            if (highlightArtist) {
-                setTimeout(() => {
-                    const card = document.querySelector(`.artist-card[data-name="${highlightArtist}"]`);
-                    if (card) {
-                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                }, 100);
-            }
-
-            updateSelectedCount();
-
-            // Update display indicator if no filters are active (show all count)
-            if (!currentSearchTerm && !currentGenreFilter) {
-                setTimeout(() => updateDisplayIndicator(), 50);
-            }
+            updateDisplayIndicator(filteredEntries.length);
         }
 
-        function getGenreFromStyle(style) {
-            if (!style) return 'Unknown';
+        function updateDisplayIndicator(displayedCount) {
+            const indicator = document.getElementById('displayIndicator');
+            const selectedCount = selectedArtists.size;
+            indicator.textContent = `Showing: ${displayedCount} | Selected: ${selectedCount}`;
 
-            // Common main genres to detect (case-insensitive)
-            const mainGenres = [
-                'Pop', 'Rock', 'Hip-Hop', 'Rap', 'Jazz', 'Blues', 'Country', 'Electronic',
-                'Dance', 'Classical', 'R&B', 'RnB', 'Soul', 'Funk', 'Reggae', 'Metal',
-                'Punk', 'Folk', 'Indie', 'Alternative', 'Gospel', 'Latin', 'Ska',
-                'Disco', 'House', 'Techno', 'Trance', 'Dubstep', 'Reggaeton',
-                'Psytrance', 'Qawwali', 'Rockabilly', 'Roll', 'Salsa', 'Score',
-                'Senegalese', 'Shoegaze', 'Son', 'Revival'
-            ];
-
-            // Convert to lowercase for comparison
-            const styleLower = style.toLowerCase();
-
-            // Check each main genre
-            for (const genre of mainGenres) {
-                const genreLower = genre.toLowerCase();
-
-                // Check if style contains this genre (as whole word or part of compound)
-                // Match patterns like: "pop", "synth-pop", "dark pop", "pop rock"
-                const regex = new RegExp(`(^|[\\s,-]|dark |synth-|indie-|alt-|electro-|dream-|art-|power-)${genreLower}([\\s,.-]|$)`, 'i');
-
-                if (regex.test(styleLower)) {
-                    return genre; // Return with proper capitalization
-                }
-            }
-
-            // If no main genre found, get first word from style
-            const firstPart = style.split(',')[0].trim();
-            const words = firstPart.split(/[\s-]/); // Split by space or hyphen
-
-            // Capitalize first letter
-            const fallback = words[words.length - 1];
-            return fallback.charAt(0).toUpperCase() + fallback.slice(1).toLowerCase();
-        }
-
-        function updateGenreFilter(artistsWithMeta) {
-            const genreFilter = document.getElementById('genreFilter');
-            const genres = new Set();
-
-            artistsWithMeta.forEach(([name, style]) => {
-                const genre = getGenreFromStyle(style);
-                genres.add(genre);
-            });
-
-            const sortedGenres = Array.from(genres).sort();
-            const currentValue = genreFilter.value;
-
-            genreFilter.innerHTML = '<option value="">All Genres</option>' +
-                sortedGenres.map(genre => `<option value="${genre}">${genre}</option>`).join('');
-
-            genreFilter.value = currentValue;
-        }
-
-        function filterByGenre() {
-            const genreFilter = document.getElementById('genreFilter');
-            currentGenreFilter = genreFilter.value;
-
-            const cards = document.querySelectorAll('.artist-card');
-            cards.forEach(card => {
-                if (!currentGenreFilter || card.dataset.genre === currentGenreFilter) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-
-            updateDisplayIndicator();
+            // Update selected count in regenerate button
+            document.getElementById('selectedCount').textContent = selectedCount;
+            document.getElementById('regenerateSelectedBtn').disabled = selectedCount === 0;
         }
 
         function toggleArtistSelection(name, event) {
-            if (event.target.checked) {
-                selectedArtists.add(name);
-            } else {
-                selectedArtists.delete(name);
-            }
-
-            const card = document.querySelector(`.artist-card[data-name="${name}"]`);
-            if (card) {
-                card.classList.toggle('selected', event.target.checked);
-            }
-
-            updateSelectedCount();
-        }
-
-        function handleCheckboxClick(event, index) {
             if (event.shiftKey && lastClickedIndex !== null) {
                 // Shift-click: select range
-                const start = Math.min(lastClickedIndex, index);
-                const end = Math.max(lastClickedIndex, index);
-                const cards = document.querySelectorAll('.artist-card');
+                const cards = Array.from(document.querySelectorAll('.artist-card'));
+                const currentIndex = cards.findIndex(card => card.dataset.name === name);
+                const start = Math.min(lastClickedIndex, currentIndex);
+                const end = Math.max(lastClickedIndex, currentIndex);
 
                 for (let i = start; i <= end; i++) {
-                    const card = cards[i];
-                    if (card) {
-                        const name = card.dataset.name;
-                        const checkbox = card.querySelector('.artist-checkbox');
-                        checkbox.checked = true;
-                        selectedArtists.add(name);
-                        card.classList.add('selected');
+                    const cardName = cards[i].dataset.name;
+                    if (event.target.checked) {
+                        selectedArtists.add(cardName);
+                    } else {
+                        selectedArtists.delete(cardName);
                     }
                 }
-
-                updateSelectedCount();
-                event.preventDefault();
+            } else {
+                // Normal click
+                if (event.target.checked) {
+                    selectedArtists.add(name);
+                } else {
+                    selectedArtists.delete(name);
+                }
             }
 
-            lastClickedIndex = index;
-        }
+            const cards = Array.from(document.querySelectorAll('.artist-card'));
+            lastClickedIndex = cards.findIndex(card => card.dataset.name === name);
 
-        function updateSelectedCount() {
-            document.getElementById('selectedCount').textContent = selectedArtists.size;
-            document.getElementById('regenerateSelectedBtn').disabled = selectedArtists.size === 0;
-            updateDisplayIndicator();
-        }
-
-        function updateDisplayIndicator() {
-            const allCards = document.querySelectorAll('.artist-card');
-            let visibleCount = 0;
-
-            allCards.forEach(card => {
-                if (card.style.display !== 'none') {
-                    visibleCount++;
-                }
-            });
-
-            const indicator = document.getElementById('displayIndicator');
-            indicator.textContent = `Showing: ${visibleCount} | Selected: ${selectedArtists.size}`;
-        }
-
-        function selectAllVisible() {
-            const allCards = document.querySelectorAll('.artist-card');
-
-            allCards.forEach(card => {
-                if (card.style.display !== 'none') {
-                    const name = card.dataset.name;
-                    const checkbox = card.querySelector('.artist-checkbox');
-
-                    selectedArtists.add(name);
-                    checkbox.checked = true;
-                    card.classList.add('selected');
-                }
-            });
-
-            updateSelectedCount();
-            showAlert(`בחרת ${selectedArtists.size} אמנים`, 'success');
-        }
-
-        function deselectAll() {
-            const allCards = document.querySelectorAll('.artist-card');
-
-            allCards.forEach(card => {
-                const checkbox = card.querySelector('.artist-checkbox');
-                checkbox.checked = false;
-                card.classList.remove('selected');
-            });
-
-            selectedArtists.clear();
-            updateSelectedCount();
-            showAlert('הבחירה בוטלה', 'success');
-        }
-
-        function sortArtists(sortType) {
-            currentSort = sortType;
             displayArtists();
         }
 
-        function filterArtists() {
-            currentSearchTerm = document.getElementById('searchInput').value.toLowerCase();
-            applySearchFilter();
+        function selectAllVisible() {
+            const cards = document.querySelectorAll('.artist-card');
+            cards.forEach(card => {
+                selectedArtists.add(card.dataset.name);
+            });
+            displayArtists();
         }
 
-        function applySearchFilter() {
-            const cards = document.querySelectorAll('.artist-card');
+        function deselectAll() {
+            selectedArtists.clear();
+            lastClickedIndex = null;
+            displayArtists();
+        }
 
-            cards.forEach(card => {
-                const name = card.dataset.name.toLowerCase();
-                if (name.includes(currentSearchTerm)) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
+        function updateStats() {
+            const totalArtists = Object.values(artistsData.artists || {}).filter(a => (a.type || 'artist') === 'artist').length;
+            const totalSongs = Object.values(artistsData.artists || {}).filter(a => a.type === 'song').length;
+            const enabled = artistsData.enabled;
+
+            document.getElementById('totalArtists').textContent = totalArtists;
+            document.getElementById('totalSongs').textContent = totalSongs;
+            document.getElementById('enabledStatus').textContent = enabled ? '✅' : '❌';
+            document.getElementById('enableToggle').checked = enabled;
+        }
+
+        function populateGenreFilter() {
+            const genres = new Set();
+            Object.values(artistsData.artists || {}).forEach(artist => {
+                if (artist.style) {
+                    const styleWords = artist.style.split(/[,\s]+/);
+                    styleWords.forEach(word => {
+                        if (word.length > 2) genres.add(word);
+                    });
                 }
             });
 
-            updateDisplayIndicator();
+            const genreFilter = document.getElementById('genreFilter');
+            const currentValue = genreFilter.value;
+
+            genreFilter.innerHTML = '<option value="">All Genres</option>' +
+                Array.from(genres).sort().map(genre =>
+                    `<option value="${genre}">${genre}</option>`
+                ).join('');
+
+            if (currentValue) genreFilter.value = currentValue;
         }
 
-        async function saveEntry() {
-            const name = document.getElementById('artistName').value.trim();
-            const style = document.getElementById('artistStyle').value.trim();
-            const entryType = document.querySelector('input[name="entry-type"]:checked').value;
-            const isArtist = entryType === 'artist';
+        function filterArtists() {
+            displayArtists();
+        }
 
-            if (!name || !style) {
-                showAlert(`נא למלא את שם ה${isArtist ? 'אמן' : 'שיר'} והסטייל`, 'error');
-                return;
-            }
+        function filterByGenre() {
+            displayArtists();
+        }
 
-            try {
-                const endpoint = isArtist ? '/api/artists' : '/api/songs';
-                const response = await fetch(`${API_URL}${endpoint}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, style, password: sessionPassword })
+        function sortArtists(type) {
+            const entries = Object.entries(artistsData.artists || {});
+
+            if (type === 'name') {
+                entries.sort((a, b) => a[0].localeCompare(b[0]));
+            } else if (type === 'recent') {
+                entries.sort((a, b) => {
+                    const timeA = a[1].lastModified || 0;
+                    const timeB = b[1].lastModified || 0;
+                    return timeB - timeA;
                 });
+            }
 
-                const data = await response.json();
+            artistsData.artists = Object.fromEntries(entries);
+            displayArtists();
+        }
 
-                if (response.ok) {
-                    showAlert(`ה${isArtist ? 'אמן' : 'שיר'} נשמר בהצלחה!`, 'success');
+        function selectArtist(name) {
+            const artist = artistsData.artists[name];
+            if (!artist) return;
 
-                    // Store the name to keep in focus
-                    const savedName = name;
+            document.getElementById('artistName').value = name;
+            document.getElementById('artistStyle').value = artist.style || '';
 
-                    document.getElementById('artistName').value = '';
-                    document.getElementById('artistStyle').value = '';
+            // Set type
+            const type = artist.type || 'artist';
+            document.querySelector(`input[name="entry-type"][value="${type}"]`).checked = true;
+            updateEntryTypeUI();
 
-                    // Reload and highlight the saved entry, keeping search filter
-                    await loadArtists();
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
 
-                    // Set search to the saved name to keep it in focus
-                    document.getElementById('searchInput').value = savedName;
-                    currentSearchTerm = savedName.toLowerCase();
-
-                    displayArtists(savedName);
-                } else {
-                    showAlert(data.error || 'שגיאה בשמירה', 'error');
+            // Highlight the card
+            const cards = document.querySelectorAll('.artist-card');
+            cards.forEach(card => {
+                if (card.dataset.name === name) {
+                    card.classList.add('highlighted');
+                    setTimeout(() => card.classList.remove('highlighted'), 2000);
                 }
-            } catch (error) {
-                showAlert('שגיאת רשת', 'error');
-            }
+            });
         }
 
-        // Toggle artist details for inline editing
-        function toggleArtistDetails(name) {
-            const detailsDiv = document.getElementById(`details-${name}`);
-            if (detailsDiv) {
-                const isVisible = detailsDiv.style.display !== 'none';
-                detailsDiv.style.display = isVisible ? 'none' : 'block';
-            }
+        function editArtist(name) {
+            selectArtist(name);
         }
 
-        // Save inline edit
-        async function saveInlineEdit(name, type) {
-            const textarea = document.getElementById(`edit-${name}`);
-            const newStyle = textarea.value.trim();
-
-            if (!newStyle) {
-                showAlert('הסטייל לא יכול להיות ריק', 'error');
+        async function deleteArtist(name) {
+            if (!confirm(`האם אתה בטוח שברצונך למחוק את "${name}"?`)) {
                 return;
             }
 
-            const isArtist = type === 'artist';
-            const endpoint = isArtist ? '/api/artists' : '/api/songs';
-
             try {
-                const response = await fetch(`${API_URL}${endpoint}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, style: newStyle, password: sessionPassword })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    showAlert(`ה${isArtist ? 'אמן' : 'שיר'} עודכן בהצלחה!`, 'success');
-
-                    // Reload and keep the entry in view with search filter
-                    await loadArtists();
-
-                    // Keep search focused on this entry
-                    document.getElementById('searchInput').value = name;
-                    currentSearchTerm = name.toLowerCase();
-
-                    displayArtists(name);
-                } else {
-                    showAlert(data.error || 'שגיאה בשמירה', 'error');
-                }
-            } catch (error) {
-                showAlert('שגיאת רשת', 'error');
-            }
-        }
-
-        async function deleteEntry(name, type) {
-            const isArtist = type === 'artist';
-            const typeLabel = isArtist ? 'אמן' : 'שיר';
-
-            if (!confirm(`האם אתה בטוח שברצונך למחוק את ה${typeLabel} ${name}?`)) {
-                return;
-            }
-
-            const endpoint = isArtist ? '/api/artists' : '/api/songs';
-
-            try {
-                const response = await fetch(`${API_URL}${endpoint}/${encodeURIComponent(name)}`, {
+                const response = await fetch(`${API_URL}/api/artists/${encodeURIComponent(name)}`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password: sessionPassword })
                 });
 
-                const data = await response.json();
+                const result = await response.json();
 
                 if (response.ok) {
-                    showAlert(`ה${typeLabel} נמחק בהצלחה`, 'success');
+                    showAlert(`✅ ${name} נמחק בהצלחה!`, 'success');
+                    selectedArtists.delete(name);
                     loadArtists();
                 } else {
-                    showAlert(data.error || 'שגיאה במחיקה', 'error');
-                }
-            } catch (error) {
-                showAlert('שגיאת רשת', 'error');
-            }
-        }
-
-        function editEntry(name, style, type) {
-            document.getElementById('artistName').value = name;
-            document.getElementById('artistStyle').value = style;
-
-            // Set the correct radio button
-            const radioButton = document.querySelector(`input[name="entry-type"][value="${type}"]`);
-            if (radioButton) {
-                radioButton.checked = true;
-                updateEntryTypeUI();
-            }
-
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        async function regenerateEntry(name, type) {
-            const llmProvider = document.getElementById('llmProvider').value;
-            const apiKey = document.getElementById('apiKey').value.trim();
-
-            if (!apiKey) {
-                showAlert('דרוש API key. הזן במקטע "הגדרות AI Generator".', 'error');
-                return;
-            }
-
-            // Find the artist card to show loading state
-            const cards = document.querySelectorAll('.artist-card');
-            let targetCard = null;
-            for (const card of cards) {
-                if (card.dataset.name === name) {
-                    targetCard = card;
-                    break;
-                }
-            }
-
-            if (targetCard) {
-                const styleDiv = targetCard.querySelector('.artist-style');
-                const originalStyle = styleDiv.textContent;
-                styleDiv.innerHTML = '<span style="color: #667eea;">⏳ Generating...</span>';
-            }
-
-            const isArtist = type === 'artist';
-            const endpoint = isArtist ? '/api/artists' : '/api/songs';
-
-            try {
-                const response = await fetch(`${API_URL}/api/generate-style`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        artistName: name,
-                        password: sessionPassword,
-                        llmProvider,
-                        apiKey: apiKey,
-                        type: type
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    const newStyle = data.generatedStyle;
-
-                    // Auto-save the new style
-                    const saveResponse = await fetch(`${API_URL}${endpoint}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            name,
-                            style: newStyle,
-                            password: sessionPassword
-                        })
-                    });
-
-                    if (saveResponse.ok) {
-                        showAlert(`✨ "${name}" regenerated and saved!`, 'success');
-                        loadArtists(); // Reload the list
-                    } else {
-                        throw new Error('Failed to save regenerated style');
-                    }
-                } else {
-                    throw new Error(data.error || 'Failed to generate');
+                    throw new Error(result.error || 'Failed to delete');
                 }
             } catch (error) {
                 showAlert('שגיאה: ' + error.message, 'error');
-                if (targetCard) {
-                    loadArtists(); // Reload to restore original
-                }
             }
         }
 
-        function setupToggleListener() {
-            document.getElementById('enableToggle').addEventListener('change', async function() {
-                try {
-                    const response = await fetch(`${API_URL}/api/toggle`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ password: sessionPassword })
-                    });
+        function updateEntryTypeUI() {
+            const type = document.querySelector('input[name="entry-type"]:checked').value;
+            const nameLabel = document.getElementById('artistName');
+            const saveBtn = document.getElementById('saveBtn');
+            const regenerateLabel = document.getElementById('regenerateLabel');
 
-                    const data = await response.json();
-
-                    if (response.ok) {
-                        artistsData.enabled = data.enabled;
-                        updateStats();
-                        showAlert(`המערכת ${data.enabled ? 'הופעלה' : 'כובתה'} בהצלחה`, 'success');
-                    } else {
-                        showAlert(data.error || 'שגיאה', 'error');
-                        this.checked = !this.checked;
-                    }
-                } catch (error) {
-                    showAlert('שגיאת רשת', 'error');
-                    this.checked = !this.checked;
-                }
-            });
+            if (type === 'song') {
+                nameLabel.placeholder = 'לדוגמה: Bohemian Rhapsody';
+                saveBtn.textContent = '💾 שמור/עדכן שיר';
+                regenerateLabel.textContent = '🔄 Regenerate existing songs? (אם לא מסומן, ידלג על שירים קיימים)';
+            } else {
+                nameLabel.placeholder = 'לדוגמה: Billy Joel';
+                saveBtn.textContent = '💾 שמור/עדכן אמן';
+                regenerateLabel.textContent = '🔄 Regenerate existing artists? (אם לא מסומן, ידלג על אמנים קיימים)';
+            }
         }
 
-        function showAlert(message, type) {
-            const alertContainer = document.getElementById('alertContainer');
-            const alertClass = type === 'error' ? 'alert-error' : 'alert-success';
+        async function saveEntry() {
+            const name = document.getElementById('artistName').value.trim();
+            const style = document.getElementById('artistStyle').value.trim();
+            const type = document.querySelector('input[name="entry-type"]:checked').value;
 
-            alertContainer.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
-
-            setTimeout(() => {
-                alertContainer.innerHTML = '';
-            }, 5000);
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML.replace(/'/g, "\\'");
-        }
-
-        // Download artists as JSON
-        function downloadJSON() {
-            if (!artistsData || !artistsData.artists) {
-                showAlert('אין נתונים להורדה', 'error');
+            if (!name) {
+                showAlert('שם חובה!', 'error');
                 return;
             }
 
-            const jsonData = JSON.stringify(artistsData, null, 2);
-            const blob = new Blob([jsonData], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
-
-            a.href = url;
-            a.download = `artist_styles_${timestamp}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            showAlert('הקובץ הורד בהצלחה!', 'success');
-            console.log('Downloaded artist_styles.json');
-        }
-
-        // Helper function to normalize artist names (removes diacritics/accents)
-        // This makes "Beyoncé" === "Beyonce", "Motörhead" === "Motorhead", etc.
-        function normalizeArtistName(name) {
-            return name
-                .normalize('NFD') // Decompose combined characters
-                .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
-                .toLowerCase()
-                .trim();
-        }
-
-        // Progress Modal Functions
-        function openProgressModal() {
-            document.getElementById('progressModal').classList.add('active');
-        }
-
-        function closeProgressModal() {
-            document.getElementById('progressModal').classList.remove('active');
-        }
-
-        function updateProgressStats(total, newCount, existingCount, skipCount) {
-            document.getElementById('statTotal').textContent = total;
-            document.getElementById('statNew').textContent = newCount;
-            document.getElementById('statExisting').textContent = existingCount;
-            document.getElementById('statSkip').textContent = skipCount;
-        }
-
-        function updateProgressBar(current, total) {
-            const percentage = Math.round((current / total) * 100);
-            const bar = document.getElementById('progressBar');
-            bar.style.width = percentage + '%';
-            bar.textContent = `${current}/${total} (${percentage}%)`;
-        }
-
-        function addProgressItem(artistName, status = 'pending') {
-            const progressList = document.getElementById('progressList');
-            const item = document.createElement('div');
-            item.className = `progress-item ${status}`;
-            item.id = `progress-${artistName.replace(/\s+/g, '-')}`;
-            item.style.cursor = 'pointer';
-
-            const icons = {
-                pending: '⏸️',
-                processing: '⏳',
-                success: '✅',
-                skipped: '⏭️',
-                failed: '❌'
-            };
-
-            const statusText = {
-                pending: 'Waiting...',
-                processing: 'Generating...',
-                success: 'Success',
-                skipped: 'Skipped',
-                failed: 'Failed'
-            };
-
-            item.innerHTML = `
-                <div class="progress-item-row">
-                    <div class="progress-item-icon">${icons[status]}</div>
-                    <div class="progress-item-name">${artistName}</div>
-                    <div class="progress-item-status">${statusText[status]}</div>
-                </div>
-                <div class="progress-item-details" style="display: none; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; font-size: 0.85em; color: #495057; white-space: pre-wrap; word-break: break-word;"></div>
-            `;
-
-            // Add click handler to toggle details
-            item.addEventListener('click', () => {
-                const details = item.querySelector('.progress-item-details');
-                if (details && details.textContent) {
-                    details.style.display = details.style.display === 'none' ? 'block' : 'none';
-                }
-            });
-
-            progressList.appendChild(item);
-        }
-
-        function updateProgressItem(artistName, status, statusMessage = null, generatedStyle = null) {
-            const itemId = `progress-${artistName.replace(/\s+/g, '-')}`;
-            const item = document.getElementById(itemId);
-            if (!item) return;
-
-            const icons = {
-                pending: '⏸️',
-                processing: '⏳',
-                success: '✅',
-                skipped: '⏭️',
-                failed: '❌'
-            };
-
-            const statusText = statusMessage || {
-                pending: 'Waiting...',
-                processing: 'Generating...',
-                success: 'Success',
-                skipped: 'Skipped',
-                failed: 'Failed'
-            }[status];
-
-            item.className = `progress-item ${status}`;
-
-            // Get existing details if any
-            const existingDetails = item.querySelector('.progress-item-details');
-            const existingDetailsContent = existingDetails ? existingDetails.textContent : '';
-            const existingDetailsDisplay = existingDetails ? existingDetails.style.display : 'none';
-
-            item.innerHTML = `
-                <div class="progress-item-row">
-                    <div class="progress-item-icon">${icons[status]}</div>
-                    <div class="progress-item-name">${artistName}</div>
-                    <div class="progress-item-status">${statusText}</div>
-                </div>
-                <div class="progress-item-details" style="display: ${existingDetailsDisplay}; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; font-size: 0.85em; color: #495057; white-space: pre-wrap; word-break: break-word;">${generatedStyle || existingDetailsContent}</div>
-            `;
-
-            // Re-add click handler
-            item.addEventListener('click', () => {
-                const details = item.querySelector('.progress-item-details');
-                if (details && details.textContent) {
-                    details.style.display = details.style.display === 'none' ? 'block' : 'none';
-                }
-            });
-
-            // Auto-scroll to current item
-            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-
-        // AI Style Generator
-        async function generateStyle() {
-            const artistNameInput = document.getElementById('artistName').value.trim();
-            const llmProvider = document.getElementById('llmProvider').value;
-            const apiKey = document.getElementById('apiKey').value.trim();
-            const generateBtn = document.getElementById('generateBtn');
-            const originalText = generateBtn.innerHTML;
-            const entryType = document.querySelector('input[name="entry-type"]:checked').value;
-            const isArtist = entryType === 'artist';
-
-            if (!artistNameInput) {
-                showAlert(`נא להזין שם ${isArtist ? 'אמן' : 'שיר'} תחילה`, 'error');
-                return;
-            }
-
-            // Check if API key is available
-            if (!apiKey) {
-                showAlert(`דרוש API key. הזן במקטע "הגדרות AI Generator".`, 'error');
-                return;
-            }
-
-            // Auto-save API key if checkbox is checked
-            const saveApiKeyCheckbox = document.getElementById('saveApiKey');
-            if (saveApiKeyCheckbox.checked && apiKey) {
-                const provider = document.getElementById('aiProvider').value;
-                saveApiKeyToLocalStorage(provider, apiKey);
-                localStorage.setItem('aiProvider', provider);
-                localStorage.setItem('llmProvider', llmProvider);
-            }
-
-            // Check if multiple entries (separated by commas)
-            const artistNames = artistNameInput.split(',').map(name => name.trim()).filter(name => name.length > 0);
-
-            if (artistNames.length === 0) {
-                showAlert(`נא להזין שם ${isArtist ? 'אמן' : 'שיר'} תקין`, 'error');
-                return;
-            }
-
-            // Check regenerate existing checkbox
-            const regenerateExisting = document.getElementById('regenerateExisting').checked;
-
-            // Show loading state
-            generateBtn.disabled = true;
-            generateBtn.innerHTML = `⏳ מנתח נתונים...`;
-
-            let successCount = 0;
-            let failCount = 0;
-            let skippedCount = 0;
-            let regeneratedCount = 0;
-            let newCount = 0;
-
-            try {
-                // PHASE 1: Load fresh artist data and analyze
-                console.log('🔄 Loading fresh artist data from server...');
-                const artistsResponse = await fetch(`${API_URL}/api/artists`);
-                const currentArtistsData = await artistsResponse.json();
-                console.log(`📊 Loaded ${Object.keys(currentArtistsData.artists || {}).length} existing artists`);
-                console.log(`⚙️ Regenerate existing: ${regenerateExisting ? 'YES' : 'NO'}`);
-
-                // PHASE 2: Pre-check all artists and categorize
-                const entryType = document.querySelector('input[name="entry-type"]:checked').value;
-                const isArtist = entryType === 'artist';
-                const collection = isArtist ? (currentArtistsData.artists || {}) : (currentArtistsData.songs || {});
-
-                let existingArtists = [];
-                let newArtists = [];
-                let willSkip = 0;
-
-                for (const artistName of artistNames) {
-                    // Case-insensitive + diacritic-insensitive check
-                    const nameNormalized = normalizeArtistName(artistName);
-                    const artistExists = Object.keys(collection).find(
-                        key => normalizeArtistName(key) === nameNormalized
-                    );
-
-                    if (artistExists) {
-                        existingArtists.push(artistName);
-                        if (!regenerateExisting) {
-                            willSkip++;
-                        }
-                    } else {
-                        newArtists.push(artistName);
-                    }
-                }
-
-                console.log(`📋 Analysis: ${newArtists.length} new, ${existingArtists.length} existing, ${willSkip} will skip`);
-
-                // PHASE 3: Open progress modal and show stats
-                document.getElementById('progressList').innerHTML = ''; // Clear previous items
-                openProgressModal();
-                updateProgressStats(artistNames.length, newArtists.length, existingArtists.length, willSkip);
-
-                // PHASE 4: Add all artists to progress list as pending
-                for (const artistName of artistNames) {
-                    addProgressItem(artistName, 'pending');
-                }
-
-                // PHASE 5: Process each artist
-                generateBtn.innerHTML = `⏳ מעבד ${artistNames.length} אמנים...`;
-                let processedCount = 0;
-
-                for (const artistName of artistNames) {
-                    try {
-                        // Check if entry already exists (case-insensitive + diacritic-insensitive)
-                        const nameNormalized = normalizeArtistName(artistName);
-                        const artistExists = Object.keys(collection).find(
-                            key => normalizeArtistName(key) === nameNormalized
-                        );
-
-                        // Skip if exists and regenerateExisting is not checked
-                        if (artistExists && !regenerateExisting) {
-                            skippedCount++;
-                            processedCount++;
-                            const existingStyle = collection[artistExists];
-                            updateProgressItem(artistName, 'skipped', 'Already exists', existingStyle);
-                            updateProgressBar(processedCount, artistNames.length);
-                            console.log(`⏭️ "${artistName}": SKIPPED`);
-                            continue;
-                        }
-
-                        // Update status to processing
-                        updateProgressItem(artistName, 'processing');
-
-                        // Generate style for this entry
-                        const response = await fetch(`${API_URL}/api/generate-style`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                artistName,
-                                password: sessionPassword,
-                                llmProvider,
-                                apiKey: apiKey,
-                                type: entryType
-                            })
-                        });
-
-                        const data = await response.json();
-
-                        if (response.ok) {
-                            const generatedStyle = data.generatedStyle;
-
-                            // Auto-save this entry
-                            const saveEndpoint = isArtist ? '/api/artists' : '/api/songs';
-                            const saveResponse = await fetch(`${API_URL}${saveEndpoint}`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    name: artistName,
-                                    style: generatedStyle,
-                                    password: sessionPassword
-                                })
-                            });
-
-                            if (saveResponse.ok) {
-                                successCount++;
-                                processedCount++;
-                                if (artistExists) {
-                                    regeneratedCount++;
-                                    updateProgressItem(artistName, 'success', 'Regenerated', generatedStyle);
-                                    console.log(`🔄 ${artistName}: regenerated`);
-                                } else {
-                                    newCount++;
-                                    updateProgressItem(artistName, 'success', 'Created new', generatedStyle);
-                                    console.log(`✓ ${artistName}: created new`);
-                                }
-                                updateProgressBar(processedCount, artistNames.length);
-                            } else {
-                                failCount++;
-                                processedCount++;
-                                updateProgressItem(artistName, 'failed', 'Save failed', generatedStyle);
-                                updateProgressBar(processedCount, artistNames.length);
-                                console.error(`✗ ${artistName}: save failed`);
-                            }
-                        } else {
-                            failCount++;
-                            processedCount++;
-                            updateProgressItem(artistName, 'failed', data.error || 'Generation failed', null);
-                            updateProgressBar(processedCount, artistNames.length);
-                            console.error(`✗ ${artistName}: ${data.error}`);
-                        }
-                    } catch (error) {
-                        failCount++;
-                        processedCount++;
-                        updateProgressItem(artistName, 'failed', error.message, null);
-                        updateProgressBar(processedCount, artistNames.length);
-                        console.error(`✗ ${artistName}: ${error.message}`);
-                    }
-                }
-
-                // PHASE 6: Complete - show close button
-                document.getElementById('closeProgressBtn').style.display = 'block';
-
-                // Clear the input fields
-                document.getElementById('artistName').value = '';
-                document.getElementById('artistStyle').value = '';
-
-                // Reload artists list
-                loadArtists();
-
-                // Build detailed result message
-                let resultParts = [];
-                if (newCount > 0) resultParts.push(`✨ ${newCount} חדשים`);
-                if (regeneratedCount > 0) resultParts.push(`🔄 ${regeneratedCount} regenerated`);
-                if (skippedCount > 0) resultParts.push(`⏭️ ${skippedCount} נדלגו`);
-                if (failCount > 0) resultParts.push(`❌ ${failCount} נכשלו`);
-
-                const resultMessage = resultParts.join(' | ');
-
-                console.log(`✅ COMPLETE! ${resultMessage}`);
-
-                // Success animation on button
-                if (successCount > 0) {
-                    generateBtn.innerHTML = `✅ הושלם: ${successCount} success`;
-                    generateBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
-                } else if (skippedCount > 0) {
-                    generateBtn.innerHTML = `⏭️ ${skippedCount} נדלגו`;
-                    generateBtn.style.background = 'linear-gradient(135deg, #6c757d 0%, #5a6268 100%)';
-                } else {
-                    generateBtn.innerHTML = `❌ ${failCount} נכשלו`;
-                    generateBtn.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
-                }
-
-                setTimeout(() => {
-                    generateBtn.innerHTML = originalText;
-                    generateBtn.style.background = '';
-                    generateBtn.disabled = false;
-                }, 3000);
-
-            } catch (error) {
-                console.error('❌ Critical error:', error);
-                showAlert('שגיאה כללית: ' + error.message, 'error');
-                closeProgressModal();
-                generateBtn.innerHTML = originalText;
-                generateBtn.disabled = false;
-            }
-        }
-
-        // Regenerate Selected Artists
-        async function regenerateSelected() {
-            if (selectedArtists.size === 0) {
-                showAlert('לא נבחרו אמנים', 'error');
-                return;
-            }
-
-            const llmProvider = document.getElementById('llmProvider').value;
-            const apiKey = document.getElementById('apiKey').value.trim();
-
-            if (!apiKey) {
-                showAlert('דרוש API key. הזן במקטע "הגדרות AI Generator".', 'error');
-                return;
-            }
-
-
-            const regenerateBtn = document.getElementById('regenerateSelectedBtn');
-            const originalText = regenerateBtn.innerHTML;
-            regenerateBtn.disabled = true;
-            regenerateBtn.innerHTML = `⏳ מעבד ${selectedArtists.size} אמנים...`;
-
-            let successCount = 0;
-            let failCount = 0;
-
-            try {
-                const selectedNames = Array.from(selectedArtists);
-
-                for (const artistName of selectedNames) {
-                    try {
-                        // Find the card and show loading
-                        const card = document.querySelector(`.artist-card[data-name="${artistName}"]`);
-                        const entryType = card ? card.dataset.type : 'artist';
-                        const isArtist = entryType === 'artist';
-
-                        if (card) {
-                            const styleDiv = card.querySelector('.artist-style');
-                            styleDiv.innerHTML = '<span style="color: #667eea;">⏳ Generating...</span>';
-                        }
-
-                        // Generate new style
-                        const response = await fetch(`${API_URL}/api/generate-style`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                artistName,
-                                password: sessionPassword,
-                                llmProvider,
-                                apiKey: apiKey,
-                                type: entryType
-                            })
-                        });
-
-                        const data = await response.json();
-
-                        if (response.ok) {
-                            const newStyle = data.generatedStyle;
-
-                            // Auto-save
-                            const saveEndpoint = isArtist ? '/api/artists' : '/api/songs';
-                            const saveResponse = await fetch(`${API_URL}${saveEndpoint}`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    name: artistName,
-                                    style: newStyle,
-                                    password: sessionPassword
-                                })
-                            });
-
-                            if (saveResponse.ok) {
-                                successCount++;
-                                console.log(`✓ ${artistName}: regenerated`);
-                            } else {
-                                failCount++;
-                            }
-                        } else {
-                            failCount++;
-                        }
-                    } catch (error) {
-                        failCount++;
-                        console.error(`✗ ${artistName}: ${error.message}`);
-                    }
-                }
-
-                // Clear selection
-                selectedArtists.clear();
-
-                // Reload
-                await loadArtists();
-                displayArtists();
-
-                if (successCount > 0) {
-                    showAlert(`✨ ${successCount} אמנים regenerated!${failCount > 0 ? ` (${failCount} נכשלו)` : ''}`, 'success');
-                } else {
-                    showAlert(`❌ כל ${failCount} האמנים נכשלו`, 'error');
-                }
-
-            } catch (error) {
-                showAlert('שגיאה: ' + error.message, 'error');
-            } finally {
-                regenerateBtn.innerHTML = originalText;
-                regenerateBtn.disabled = selectedArtists.size === 0;
-            }
-        }
-
-        // Regenerate All Artists
-        async function regenerateAll() {
-            const llmProvider = document.getElementById('llmProvider').value;
-            const apiKey = document.getElementById('apiKey').value.trim();
-
-            if (!apiKey) {
-                showAlert('דרוש API key. הזן במקטע "הגדרות AI Generator".', 'error');
-                return;
-            }
-
-            const totalArtists = Object.keys(artistsData.artists).length;
-
-            if (!confirm(`⚠️ WARNING: This will regenerate ALL ${totalArtists} artists using AI. This may take a while and cost API credits. Continue?`)) {
-                return;
-            }
-
-            showAlert(`🔥 Starting regeneration of ${totalArtists} artists...`, 'success');
-
-            let successCount = 0;
-            let failCount = 0;
-
-            try {
-                const allArtists = Object.keys(artistsData.artists);
-
-                for (let i = 0; i < allArtists.length; i++) {
-                    const artistName = allArtists[i];
-
-                    try {
-                        console.log(`[${i + 1}/${allArtists.length}] Regenerating: ${artistName}`);
-
-                        // Generate new style
-                        const response = await fetch(`${API_URL}/api/generate-style`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                artistName,
-                                password: sessionPassword,
-                                llmProvider,
-                                apiKey: apiKey
-                            })
-                        });
-
-                        const data = await response.json();
-
-                        if (response.ok) {
-                            const newStyle = data.generatedStyle;
-
-                            // Auto-save
-                            const saveResponse = await fetch(`${API_URL}/api/artists`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    name: artistName,
-                                    style: newStyle,
-                                    password: sessionPassword
-                                })
-                            });
-
-                            if (saveResponse.ok) {
-                                successCount++;
-                            } else {
-                                failCount++;
-                            }
-                        } else {
-                            failCount++;
-                        }
-
-                        // Update progress every 10 artists
-                        if ((i + 1) % 10 === 0) {
-                            showAlert(`Progress: ${i + 1}/${allArtists.length} (✓ ${successCount} | ✗ ${failCount})`, 'success');
-                        }
-
-                    } catch (error) {
-                        failCount++;
-                        console.error(`✗ ${artistName}: ${error.message}`);
-                    }
-                }
-
-                // Reload
-                await loadArtists();
-                displayArtists();
-
-                showAlert(`✅ Regeneration complete! ✓ ${successCount} | ✗ ${failCount}`, 'success');
-
-            } catch (error) {
-                showAlert('שגיאה: ' + error.message, 'error');
-            }
-        }
-
-        // JSON Management Functions
-
-        // Open JSON Editor Modal
-        async function openJsonEditor() {
-            try {
-                const response = await fetch(`${API_URL}/api/json/raw`);
-                const jsonData = await response.json();
-
-                const jsonString = JSON.stringify(jsonData, null, 2);
-                document.getElementById('jsonEditorTextarea').value = jsonString;
-                document.getElementById('jsonEditorModal').classList.add('active');
-            } catch (error) {
-                showAlert('שגיאה בטעינת JSON: ' + error.message, 'error');
-            }
-        }
-
-        function closeJsonEditor() {
-            document.getElementById('jsonEditorModal').classList.remove('active');
-        }
-
-        // Save edited JSON
-        async function saveEditedJson() {
-            const textarea = document.getElementById('jsonEditorTextarea');
-            const saveBtn = document.getElementById('saveJsonBtn');
+            const saveBtn = document.getElementById('saveBtn');
             const originalText = saveBtn.textContent;
+            saveBtn.disabled = true;
+            saveBtn.textContent = '⏳ שומר...';
 
             try {
-                // Parse JSON to validate
-                const jsonData = JSON.parse(textarea.value);
-
-                // Validate structure
-                if (!jsonData.artists || typeof jsonData.artists !== 'object') {
-                    throw new Error('Invalid JSON structure - missing artists object');
-                }
-
-                saveBtn.textContent = '⏳ Saving...';
-                saveBtn.disabled = true;
-
-                const response = await fetch(`${API_URL}/api/json/upload`, {
+                const response = await fetch(`${API_URL}/api/artists`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        password: sessionPassword,
-                        jsonData: jsonData
+                        name,
+                        style,
+                        type,
+                        password: sessionPassword
                     })
                 });
 
                 const result = await response.json();
 
                 if (response.ok) {
-                    showAlert(`✅ JSON saved! ${result.artistCount} artists. Backup: ${result.backupFile}`, 'success');
-                    closeJsonEditor();
+                    showAlert(`✅ ${name} נשמר בהצלחה!`, 'success');
+                    document.getElementById('artistName').value = '';
+                    document.getElementById('artistStyle').value = '';
                     loadArtists();
                 } else {
                     throw new Error(result.error || 'Failed to save');
@@ -2274,80 +1612,402 @@
             }
         }
 
-        // Handle JSON file upload
-        async function handleJsonUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        async function generateStyle() {
+            const name = document.getElementById('artistName').value.trim();
+            const type = document.querySelector('input[name="entry-type"]:checked').value;
 
-            const reader = new FileReader();
-
-            reader.onload = async (e) => {
-                try {
-                    const jsonData = JSON.parse(e.target.result);
-
-                    if (!jsonData.artists || typeof jsonData.artists !== 'object') {
-                        throw new Error('Invalid JSON structure - missing artists object');
-                    }
-
-                    const artistCount = Object.keys(jsonData.artists).length;
-
-                    if (!confirm(`⚠️ Upload JSON with ${artistCount} artists?\n\nThis will REPLACE the current database.\nA backup will be created automatically.`)) {
-                        event.target.value = ''; // Reset input
-                        return;
-                    }
-
-                    const response = await fetch(`${API_URL}/api/json/upload`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            password: sessionPassword,
-                            jsonData: jsonData
-                        })
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                        showAlert(`✅ JSON uploaded! ${result.artistCount} artists loaded.`, 'success');
-                        loadArtists();
-                    } else {
-                        throw new Error(result.error || 'Upload failed');
-                    }
-                } catch (error) {
-                    showAlert('שגיאה: ' + error.message, 'error');
-                } finally {
-                    event.target.value = ''; // Reset input
-                }
-            };
-
-            reader.readAsText(file);
-        }
-
-        // Clear all artists
-        async function clearAllArtists() {
-            const artistCount = Object.keys(artistsData.artists || {}).length;
-
-            const userConfirm = prompt(`⚠️⚠️⚠️ WARNING ⚠️⚠️⚠️\n\nThis will DELETE ALL ${artistCount} artists from the database!\n\nA backup will be created automatically.\n\nType "DELETE ALL" to confirm:`);
-
-            if (userConfirm !== 'DELETE ALL') {
-                showAlert('ביטול הפעולה', 'success');
+            if (!name) {
+                showAlert(`${type === 'song' ? 'שם השיר' : 'שם האמן'} חובה!`, 'error');
                 return;
             }
 
+            // Get API settings
+            const provider = document.getElementById('aiProvider').value;
+            const model = document.getElementById('llmProvider').value;
+            const apiKeyInput = document.getElementById('apiKey').value.trim();
+            const shouldSaveKey = document.getElementById('saveApiKey').checked;
+
+            // Get API key from input or localStorage
+            let apiKey = apiKeyInput || loadApiKeyFromLocalStorage(provider);
+
+            if (!apiKey) {
+                showAlert('API Key חסר! הזן API key בהגדרות.', 'error');
+                return;
+            }
+
+            // Save API key if checkbox is checked and there's a new key
+            if (shouldSaveKey && apiKeyInput) {
+                saveApiKeyToLocalStorage(provider, apiKeyInput);
+            }
+
+            // Save provider and model to localStorage
+            localStorage.setItem('aiProvider', provider);
+            localStorage.setItem('llmProvider', model);
+
+            const generateBtn = document.getElementById('generateBtn');
+            const originalText = generateBtn.textContent;
+            generateBtn.disabled = true;
+            generateBtn.textContent = '⏳ יוצר...';
+
             try {
-                const response = await fetch(`${API_URL}/api/json/clear`, {
+                const response = await fetch(`${API_URL}/api/generate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        password: sessionPassword,
-                        confirm: 'DELETE_ALL_ARTISTS'
+                        name,
+                        type,
+                        provider,
+                        model,
+                        apiKey,
+                        password: sessionPassword
                     })
                 });
 
                 const result = await response.json();
 
                 if (response.ok) {
-                    showAlert(`✅ All artists cleared. Backup: ${result.backupFile}`, 'success');
+                    document.getElementById('artistStyle').value = result.style;
+                    showAlert(`✅ סטייל נוצר בהצלחה עבור ${name}!`, 'success');
+                } else {
+                    throw new Error(result.error || 'Failed to generate');
+                }
+            } catch (error) {
+                showAlert('שגיאה: ' + error.message, 'error');
+            } finally {
+                generateBtn.textContent = originalText;
+                generateBtn.disabled = false;
+            }
+        }
+
+        async function regenerateSelected() {
+            if (selectedArtists.size === 0) {
+                showAlert('לא נבחרו פריטים!', 'error');
+                return;
+            }
+
+            const names = Array.from(selectedArtists);
+            await regenerateBatch(names);
+        }
+
+        async function regenerateAll() {
+            if (!confirm('האם אתה בטוח? זה ייצור מחדש את כל הסטיילים!')) {
+                return;
+            }
+
+            const names = Object.keys(artistsData.artists || {});
+            await regenerateBatch(names);
+        }
+
+        async function regenerateBatch(names) {
+            // Get API settings
+            const provider = document.getElementById('aiProvider').value;
+            const model = document.getElementById('llmProvider').value;
+            const apiKeyInput = document.getElementById('apiKey').value.trim();
+            const shouldSaveKey = document.getElementById('saveApiKey').checked;
+            const regenerateExisting = document.getElementById('regenerateExisting').checked;
+
+            // Get API key
+            let apiKey = apiKeyInput || loadApiKeyFromLocalStorage(provider);
+
+            if (!apiKey) {
+                showAlert('API Key חסר! הזן API key בהגדרות.', 'error');
+                return;
+            }
+
+            // Save settings
+            if (shouldSaveKey && apiKeyInput) {
+                saveApiKeyToLocalStorage(provider, apiKeyInput);
+            }
+            localStorage.setItem('aiProvider', provider);
+            localStorage.setItem('llmProvider', model);
+
+            // Open progress modal
+            openProgressModal(names, regenerateExisting);
+
+            // Process batch
+            for (let i = 0; i < names.length; i++) {
+                const name = names[i];
+                const artist = artistsData.artists[name];
+                const type = artist?.type || 'artist';
+
+                updateProgressItem(name, 'processing', 'Generating...');
+
+                try {
+                    // Check if should skip
+                    if (!regenerateExisting && artist?.style) {
+                        updateProgressItem(name, 'skipped', 'Already has style');
+                        updateProgressBar(i + 1, names.length);
+                        continue;
+                    }
+
+                    const response = await fetch(`${API_URL}/api/generate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name,
+                            type,
+                            provider,
+                            model,
+                            apiKey,
+                            password: sessionPassword
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        // Save the generated style
+                        await fetch(`${API_URL}/api/artists`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name,
+                                style: result.style,
+                                type,
+                                password: sessionPassword
+                            })
+                        });
+
+                        updateProgressItem(name, 'success', 'Generated!');
+                    } else {
+                        throw new Error(result.error || 'Failed');
+                    }
+                } catch (error) {
+                    updateProgressItem(name, 'failed', error.message);
+                }
+
+                updateProgressBar(i + 1, names.length);
+            }
+
+            // Reload artists after completion
+            await loadArtists();
+
+            // Show close button
+            document.getElementById('closeProgressBtn').style.display = 'block';
+        }
+
+        function openProgressModal(names, regenerateExisting) {
+            const modal = document.getElementById('progressModal');
+            const progressList = document.getElementById('progressList');
+
+            // Calculate stats
+            let newCount = 0;
+            let existingCount = 0;
+            let skipCount = 0;
+
+            names.forEach(name => {
+                const artist = artistsData.artists[name];
+                if (artist?.style) {
+                    existingCount++;
+                    if (!regenerateExisting) skipCount++;
+                } else {
+                    newCount++;
+                }
+            });
+
+            document.getElementById('statTotal').textContent = names.length;
+            document.getElementById('statNew').textContent = newCount;
+            document.getElementById('statExisting').textContent = existingCount;
+            document.getElementById('statSkip').textContent = skipCount;
+
+            // Create progress items
+            progressList.innerHTML = names.map(name => {
+                const artist = artistsData.artists[name];
+                const type = artist?.type || 'artist';
+                const icon = type === 'song' ? '🎵' : '🎤';
+                const hasStyle = artist?.style;
+                const willSkip = hasStyle && !regenerateExisting;
+                const status = willSkip ? 'skipped' : 'pending';
+                const statusText = willSkip ? 'Will skip (has style)' : 'Waiting...';
+
+                return `
+                    <div class="progress-item ${status}" data-name="${name}">
+                        <div class="progress-item-row">
+                            <div class="progress-item-icon">${icon}</div>
+                            <div class="progress-item-name">${name}</div>
+                            <div class="progress-item-status">${statusText}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressBar').textContent = '0%';
+            document.getElementById('closeProgressBtn').style.display = 'none';
+
+            modal.classList.add('active');
+        }
+
+        function updateProgressItem(name, status, statusText) {
+            const item = document.querySelector(`.progress-item[data-name="${name}"]`);
+            if (!item) return;
+
+            item.className = `progress-item ${status}`;
+
+            const icons = {
+                pending: '⏳',
+                processing: '⚙️',
+                success: '✅',
+                skipped: '⏭️',
+                failed: '❌'
+            };
+
+            item.querySelector('.progress-item-icon').textContent = icons[status] || '⏳';
+            item.querySelector('.progress-item-status').textContent = statusText;
+
+            // Scroll to current item
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function updateProgressBar(current, total) {
+            const percentage = Math.round((current / total) * 100);
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = percentage + '%';
+        }
+
+        function closeProgressModal() {
+            document.getElementById('progressModal').classList.remove('active');
+        }
+
+        async function downloadJSON() {
+            try {
+                const response = await fetch(`${API_URL}/api/artists`);
+                const data = await response.json();
+
+                const dataStr = JSON.stringify(data, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'artist_styles.json';
+                link.click();
+                URL.revokeObjectURL(url);
+
+                showAlert('✅ JSON הורד בהצלחה!', 'success');
+            } catch (error) {
+                showAlert('שגיאה: ' + error.message, 'error');
+            }
+        }
+
+        async function openJsonEditor() {
+            try {
+                const response = await fetch(`${API_URL}/api/artists`);
+                const data = await response.json();
+
+                const textarea = document.getElementById('jsonEditorTextarea');
+                textarea.value = JSON.stringify(data, null, 2);
+
+                document.getElementById('jsonEditorModal').classList.add('active');
+            } catch (error) {
+                showAlert('שגיאה: ' + error.message, 'error');
+            }
+        }
+
+        function closeJsonEditor() {
+            document.getElementById('jsonEditorModal').classList.remove('active');
+        }
+
+        async function saveEditedJson() {
+            const textarea = document.getElementById('jsonEditorTextarea');
+            const saveBtn = document.getElementById('saveJsonBtn');
+            const originalText = saveBtn.textContent;
+
+            try {
+                // Validate JSON
+                const data = JSON.parse(textarea.value);
+
+                saveBtn.disabled = true;
+                saveBtn.textContent = '⏳ שומר...';
+
+                const response = await fetch(`${API_URL}/api/upload-json`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        data,
+                        password: sessionPassword
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert('✅ JSON נשמר בהצלחה!', 'success');
+                    closeJsonEditor();
+                    loadArtists();
+                } else {
+                    throw new Error(result.error || 'Failed to save');
+                }
+            } catch (error) {
+                if (error instanceof SyntaxError) {
+                    showAlert('שגיאה: JSON לא תקין!', 'error');
+                } else {
+                    showAlert('שגיאה: ' + error.message, 'error');
+                }
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }
+        }
+
+        async function handleJsonUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+
+                const response = await fetch(`${API_URL}/api/upload-json`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        data,
+                        password: sessionPassword
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert('✅ JSON הועלה בהצלחה!', 'success');
+                    loadArtists();
+                } else {
+                    throw new Error(result.error || 'Failed to upload');
+                }
+            } catch (error) {
+                if (error instanceof SyntaxError) {
+                    showAlert('שגיאה: JSON לא תקין!', 'error');
+                } else {
+                    showAlert('שגיאה: ' + error.message, 'error');
+                }
+            }
+
+            // Reset file input
+            event.target.value = '';
+        }
+
+        async function clearAllArtists() {
+            if (!confirm('האם אתה בטוח? זה ימחק את כל הנתונים! (יווצר backup אוטומטי)')) {
+                return;
+            }
+
+            if (!confirm('אזהרה אחרונה! כל הנתונים יימחקו. האם להמשיך?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/clear-all`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: sessionPassword })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert('✅ כל הנתונים נמחקו! (backup נשמר)', 'success');
+                    selectedArtists.clear();
                     loadArtists();
                 } else {
                     throw new Error(result.error || 'Failed to clear');
@@ -2357,25 +2017,36 @@
             }
         }
 
-        // Prompt Editor Functions
-        let currentPromptType = 'artist';
+        let currentPromptType = '';
 
         async function openPromptEditor(type) {
             currentPromptType = type;
-            const title = type === 'artist' ? '🎤 Edit Artist Prompt' : '🎵 Edit Song Prompt';
-            const placeholder = type === 'artist' ? '{ARTIST_NAME}' : '{SONG_NAME}';
 
-            document.getElementById('promptEditorTitle').textContent = title;
-            document.getElementById('promptEditorDesc').textContent = `Edit the ${type} prompt template. Use ${placeholder} as placeholder.`;
+            const title = document.getElementById('promptEditorTitle');
+            const desc = document.getElementById('promptEditorDesc');
+            const textarea = document.getElementById('promptEditorTextarea');
+
+            if (type === 'artist') {
+                title.textContent = '🎤 Edit Artist Prompt';
+                desc.textContent = 'Edit the AI prompt for generating artist styles. Use {ARTIST_NAME} as placeholder.';
+            } else {
+                title.textContent = '🎵 Edit Song Prompt';
+                desc.textContent = 'Edit the AI prompt for generating song styles. Use {SONG_NAME} as placeholder.';
+            }
 
             try {
-                const response = await fetch(`${API_URL}/api/prompts`);
-                const prompts = await response.json();
+                const response = await fetch(`${API_URL}/api/prompts/${type}`);
+                const result = await response.json();
 
-                document.getElementById('promptEditorTextarea').value = prompts[type] || '';
+                if (response.ok) {
+                    textarea.value = result.content || '';
+                } else {
+                    throw new Error(result.error || 'Failed to load prompt');
+                }
+
                 document.getElementById('promptEditorModal').classList.add('active');
             } catch (error) {
-                showAlert('שגיאה בטעינת prompt: ' + error.message, 'error');
+                showAlert('שגיאה: ' + error.message, 'error');
             }
         }
 
@@ -2384,17 +2055,18 @@
         }
 
         async function savePrompt() {
-            const content = document.getElementById('promptEditorTextarea').value.trim();
+            const textarea = document.getElementById('promptEditorTextarea');
+            const content = textarea.value.trim();
             const saveBtn = document.getElementById('savePromptBtn');
             const originalText = saveBtn.textContent;
 
             if (!content) {
-                showAlert('Prompt cannot be empty', 'error');
+                showAlert('Prompt cannot be empty!', 'error');
                 return;
             }
 
-            saveBtn.textContent = '⏳ Saving...';
             saveBtn.disabled = true;
+            saveBtn.textContent = '⏳ שומר...';
 
             try {
                 const response = await fetch(`${API_URL}/api/prompts`, {
@@ -2422,106 +2094,17 @@
                 saveBtn.disabled = false;
             }
         }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertClass = type === 'error' ? 'alert-error' : 'alert-success';
+
+            alertContainer.innerHTML = `<div class="alert ${alertClass}">${message}</div>`;
+
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
     </script>
-
-    <!-- Progress Modal -->
-    <div id="progressModal" class="progress-modal">
-        <div class="progress-panel">
-            <div class="progress-header">
-                <h2>🤖 AI Generation Progress</h2>
-                <div class="progress-stats">
-                    <div class="progress-stat stat-total">
-                        Total: <span id="statTotal">0</span>
-                    </div>
-                    <div class="progress-stat stat-new">
-                        New: <span id="statNew">0</span>
-                    </div>
-                    <div class="progress-stat stat-existing">
-                        Existing: <span id="statExisting">0</span>
-                    </div>
-                    <div class="progress-stat stat-skip">
-                        Will Skip: <span id="statSkip">0</span>
-                    </div>
-                </div>
-                <div class="progress-bar-container">
-                    <div class="progress-bar" id="progressBar" style="width: 0%">0%</div>
-                </div>
-            </div>
-            <div class="progress-list" id="progressList">
-                <!-- Progress items will be added here dynamically -->
-            </div>
-            <div class="progress-footer">
-                <button class="btn btn-primary" id="closeProgressBtn" onclick="closeProgressModal()" style="display: none;">
-                    ✅ Close
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- JSON Editor Modal -->
-    <div id="jsonEditorModal" class="progress-modal">
-        <div class="progress-panel" style="max-width: 800px;">
-            <div class="progress-header">
-                <h2>✏️ Edit JSON Database</h2>
-                <p style="color: #6c757d; font-size: 0.9em; margin-top: 8px;">
-                    Direct edit of artist_styles.json - Be careful! A backup will be created automatically.
-                </p>
-            </div>
-            <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
-                <textarea id="jsonEditorTextarea" style="
-                    flex: 1;
-                    font-family: 'Courier New', monospace;
-                    font-size: 13px;
-                    padding: 15px;
-                    border: 2px solid #dee2e6;
-                    border-radius: 8px;
-                    resize: none;
-                    background: #f8f9fa;
-                    color: #2d3748;
-                "></textarea>
-            </div>
-            <div class="progress-footer" style="margin-top: 20px;">
-                <button class="btn" onclick="closeJsonEditor()" style="background: #6c757d; color: white;">
-                    ✖️ Cancel
-                </button>
-                <button class="btn btn-primary" id="saveJsonBtn" onclick="saveEditedJson()">
-                    💾 Save JSON
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Prompt Editor Modal -->
-    <div id="promptEditorModal" class="progress-modal">
-        <div class="progress-panel" style="max-width: 800px;">
-            <div class="progress-header">
-                <h2 id="promptEditorTitle">✏️ Edit Prompt</h2>
-                <p style="color: #6c757d; font-size: 0.9em; margin-top: 8px;" id="promptEditorDesc">
-                    Edit the AI prompt template. Use {ARTIST_NAME} or {SONG_NAME} as placeholder.
-                </p>
-            </div>
-            <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
-                <textarea id="promptEditorTextarea" style="
-                    flex: 1;
-                    font-family: 'Courier New', monospace;
-                    font-size: 13px;
-                    padding: 15px;
-                    border: 2px solid #dee2e6;
-                    border-radius: 8px;
-                    resize: none;
-                    background: #f8f9fa;
-                    color: #2d3748;
-                "></textarea>
-            </div>
-            <div class="progress-footer" style="margin-top: 20px;">
-                <button class="btn" onclick="closePromptEditor()" style="background: #6c757d; color: white;">
-                    ✖️ Cancel
-                </button>
-                <button class="btn btn-primary" id="savePromptBtn" onclick="savePrompt()">
-                    💾 Save Prompt
-                </button>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
