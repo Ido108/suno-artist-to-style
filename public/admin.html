@@ -943,6 +943,9 @@
 
             // Load saved API key
             updateApiInputState(true);
+
+            // Update indicator after models are populated
+            updateAdminApiIndicator();
         }
 
         // Update admin API indicator
@@ -952,8 +955,17 @@
             const currentKey = document.getElementById('apiKey').value.trim();
             const hasKey = !!(savedKey || currentKey);
 
-            const modelName = document.getElementById('llmProvider').options[document.getElementById('llmProvider').selectedIndex].text;
+            const llmProviderSelect = document.getElementById('llmProvider');
             const indicator = document.getElementById('adminApiIndicator');
+
+            // Check if options are populated
+            if (llmProviderSelect.options.length === 0) {
+                indicator.innerHTML = `⚠️ Loading...`;
+                indicator.style.color = '#6c757d';
+                return;
+            }
+
+            const modelName = llmProviderSelect.options[llmProviderSelect.selectedIndex].text;
 
             if (hasKey) {
                 indicator.innerHTML = `✅ ${modelName}`;
@@ -1025,8 +1037,7 @@
                 updateAdminApiIndicator();
             });
 
-            // Update indicator on load
-            updateAdminApiIndicator();
+            // Indicator will be updated by initializeApiSettings()
         }
 
         // Load artists on page load
