@@ -1474,8 +1474,16 @@
 
         function populateGenreFilter() {
             const genres = new Set();
-            Object.values(artistsData.artists || {}).forEach(artist => {
-                const genre = getGenreFromStyle(artist.style);
+
+            // Get genres from artists
+            Object.values(artistsData.artists || {}).forEach(style => {
+                const genre = getGenreFromStyle(style);
+                genres.add(genre);
+            });
+
+            // Get genres from songs
+            Object.values(artistsData.songs || {}).forEach(style => {
+                const genre = getGenreFromStyle(style);
                 genres.add(genre);
             });
 
@@ -1823,32 +1831,32 @@
             }
 
             try {
-                const response = await fetch(`${API_URL}/api/generate`, {
+                const response = await fetch(`${API_URL}/api/generate-style`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        name,
-                        type,
-                        provider,
-                        model,
-                        apiKey,
-                        password: sessionPassword
+                        artistName: name,
+                        password: sessionPassword,
+                        llmProvider,
+                        apiKey: apiKey,
+                        type: type
                     })
                 });
 
                 const result = await response.json();
 
                 if (response.ok) {
-                    const newStyle = result.style;
+                    const newStyle = result.generatedStyle;
 
                     // Auto-save the new style
-                    const saveResponse = await fetch(`${API_URL}/api/artists`, {
+                    const isArtist = type === 'artist';
+                    const endpoint = isArtist ? '/api/artists' : '/api/songs';
+                    const saveResponse = await fetch(`${API_URL}${endpoint}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             name,
                             style: newStyle,
-                            type,
                             password: sessionPassword
                         })
                     });
@@ -1908,23 +1916,22 @@
             generateBtn.textContent = '⏳ יוצר...';
 
             try {
-                const response = await fetch(`${API_URL}/api/generate`, {
+                const response = await fetch(`${API_URL}/api/generate-style`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        name,
-                        type,
-                        provider,
-                        model,
-                        apiKey,
-                        password: sessionPassword
+                        artistName: name,
+                        password: sessionPassword,
+                        llmProvider,
+                        apiKey: apiKey,
+                        type: type
                     })
                 });
 
                 const result = await response.json();
 
                 if (response.ok) {
-                    document.getElementById('artistStyle').value = result.style;
+                    document.getElementById('artistStyle').value = result.generatedStyle;
                     showAlert(`✅ סטייל נוצר בהצלחה עבור ${name}!`, 'success');
                 } else {
                     throw new Error(result.error || 'Failed to generate');
@@ -2026,16 +2033,19 @@
                 updateProgressItem(name, 'processing', 'Generating...');
 
                 try {
-                    const response = await fetch(`${API_URL}/api/generate`, {
+                    const card = document.querySelector(`.artist-card[data-name="${name}"]`);
+                    const entryType = card ? card.dataset.type : 'artist';
+                    const isArtist = entryType === 'artist';
+
+                    const response = await fetch(`${API_URL}/api/generate-style`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            name,
-                            type,
-                            provider,
-                            model,
-                            apiKey,
-                            password: sessionPassword
+                            artistName: name,
+                            password: sessionPassword,
+                            llmProvider,
+                            apiKey: apiKey,
+                            type: entryType
                         })
                     });
 
@@ -2043,18 +2053,18 @@
 
                     if (response.ok) {
                         // Save the generated style
-                        await fetch(`${API_URL}/api/artists`, {
+                        const endpoint = isArtist ? '/api/artists' : '/api/songs';
+                        await fetch(`${API_URL}${endpoint}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 name,
-                                style: result.style,
-                                type,
+                                style: result.generatedStyle,
                                 password: sessionPassword
                             })
                         });
 
-                        updateProgressItem(name, 'success', 'Generated!', result.style);
+                        updateProgressItem(name, 'success', 'Generated!', result.generatedStyle);
                     } else {
                         throw new Error(result.error || 'Failed');
                     }
@@ -2351,13 +2361,13 @@
             }
 
             try {
-                const response = await fetch(`${API_URL}/api/prompts/${type}`);
-                const result = await response.json();
+                const response = await fetch(`${API_URL}/api/prompts`);
+                const prompts = await response.json();
 
                 if (response.ok) {
-                    textarea.value = result.content || '';
+                    textarea.value = prompts[type] || '';
                 } else {
-                    throw new Error(result.error || 'Failed to load prompt');
+                    throw new Error(prompts.error || 'Failed to load prompt');
                 }
 
                 document.getElementById('promptEditorModal').classList.add('active');
