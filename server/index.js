@@ -374,7 +374,7 @@ CRITICAL INSTRUCTIONS:
 8. Output ONLY the comma-separated style description, no quotes, no explanations
 9. Focus on the SPECIFIC characteristics of this particular song, not the artist's general style
 10. MAKE SURE you state the exact year of this song (or decade) (like "1993's [genre])
-
+11. NEVER WRITE ANY OTHER OUTPUT THAN THE style description. IF you don'w know which exact song is it refer to (like song name that is matching multiple songs), write the output about the most known song out of the options (but only for that song). 
 FORMAT RULES:
 - Comma-separated list
 - Start with main genre(s)
