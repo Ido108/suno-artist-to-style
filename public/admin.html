@@ -60,15 +60,16 @@
             overflow: hidden;
         }
 
-        /* COLLAPSIBLE SIDEBAR */
+        /* COLLAPSIBLE SIDEBAR - RIGHT SIDE */
         .sidebar {
             width: 0;
             background: #f8f9fa;
-            border-left: 1px solid #dee2e6;
+            border-right: 1px solid #dee2e6;
             overflow: hidden;
             transition: width 0.3s ease;
             display: flex;
             flex-direction: column;
+            order: 2;
         }
 
         .sidebar.open {
@@ -102,7 +103,7 @@
             padding: 8px 12px;
         }
 
-        /* SETTINGS TOGGLE BUTTON */
+        /* SETTINGS TOGGLE BUTTON - RIGHT SIDE */
         .settings-toggle {
             position: absolute;
             right: 15px;
@@ -131,6 +132,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            order: 1;
         }
 
         /* COMPACT STATS BAR */
@@ -870,7 +872,7 @@
                 </div>
             </div>
 
-            <!-- Collapsible Sidebar (starts closed) -->
+            <!-- Collapsible Sidebar (starts closed) - RIGHT SIDE -->
             <div class="sidebar" id="sidebar">
                 <div class="sidebar-content">
                     <!-- System Toggle -->
@@ -1039,6 +1041,9 @@
         let sessionPassword = ''; // Store password for session
         let selectedArtists = new Set(); // Track selected artists
         let lastClickedIndex = null; // For shift-click selection
+        let currentSort = 'name'; // Default sort
+        let currentGenreFilter = ''; // Current genre filter
+        let currentSearchTerm = ''; // Track current search term
 
         // Sidebar toggle function
         function toggleSidebar() {
@@ -1326,6 +1331,10 @@
             });
         }
 
+        function updateToggle() {
+            document.getElementById('enableToggle').checked = artistsData.enabled;
+        }
+
         async function loadArtists() {
             try {
                 const response = await fetch(`${API_URL}/api/artists`);
@@ -1335,128 +1344,126 @@
 
                 displayArtists();
                 updateStats();
-                populateGenreFilter();
 
             } catch (error) {
                 showAlert('שגיאה בטעינת נתונים: ' + error.message, 'error');
             }
         }
 
-        function displayArtists() {
+        function displayArtists(highlightArtist = null) {
             const artistsList = document.getElementById('artistsList');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const selectedGenre = document.getElementById('genreFilter').value;
 
             const entries = Object.entries(artistsData.artists || {});
 
             let filteredEntries = entries.filter(([name, data]) => {
-                const matchesSearch = name.toLowerCase().includes(searchTerm) ||
-                                    (data.style && data.style.toLowerCase().includes(searchTerm));
-                const matchesGenre = !selectedGenre || (data.style && data.style.toLowerCase().includes(selectedGenre.toLowerCase()));
+                const matchesSearch = !currentSearchTerm ||
+                    name.toLowerCase().includes(currentSearchTerm) ||
+                    (data.style && data.style.toLowerCase().includes(currentSearchTerm));
+                const genre = getGenreFromStyle(data.style);
+                const matchesGenre = !currentGenreFilter || genre === currentGenreFilter;
                 return matchesSearch && matchesGenre;
             });
 
+            // Sort based on current sort mode
+            if (currentSort === 'name') {
+                filteredEntries.sort((a, b) => a[0].localeCompare(b[0]));
+            } else if (currentSort === 'recent') {
+                filteredEntries.sort((a, b) => {
+                    const timeA = a[1].lastModified || 0;
+                    const timeB = b[1].lastModified || 0;
+                    return timeB - timeA;
+                });
+            }
+
+            // Populate genre filter
+            populateGenreFilter();
+
             artistsList.innerHTML = filteredEntries.map(([name, data], index) => {
                 const isSelected = selectedArtists.has(name);
+                const isHighlighted = highlightArtist === name;
                 const type = data.type || 'artist';
                 const icon = type === 'song' ? '🎵' : '🎤';
+                const genre = getGenreFromStyle(data.style);
 
                 return `
-                    <div class="artist-card ${isSelected ? 'selected' : ''}" data-name="${name}" data-index="${index}">
+                    <div class="artist-card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}" data-name="${name}" data-index="${index}" data-genre="${genre}" data-type="${type}">
                         <input type="checkbox" class="artist-checkbox"
                                ${isSelected ? 'checked' : ''}
-                               onchange="toggleArtistSelection('${name.replace(/'/g, "\\'")}', event)"
-                               onclick="event.stopPropagation()">
-                        <div class="artist-info" onclick="selectArtist('${name.replace(/'/g, "\\'")}')">
+                               onchange="toggleArtistSelection('${escapeHtml(name)}', event)"
+                               onclick="handleCheckboxClick(event, ${index})">
+                        <div class="artist-info" onclick="toggleArtistDetails('${escapeHtml(name)}')">
                             <div class="artist-name">${icon} ${name}</div>
-                            <div class="artist-style">${data.style || 'אין תיאור'}</div>
+                            <div class="artist-style" title="${escapeHtml(data.style || '')}">${data.style || 'אין תיאור'}</div>
+                            <div class="artist-details" id="details-${escapeHtml(name)}" style="display: none;">
+                                <textarea class="edit-textarea" id="edit-${escapeHtml(name)}" data-type="${type}" style="width: 100%; margin-top: 10px; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; font-size: 0.9em;">${escapeHtml(data.style || '')}</textarea>
+                                <button class="btn btn-primary" onclick="saveInlineEdit('${escapeHtml(name)}', '${type}'); event.stopPropagation();" style="margin-top: 8px; padding: 4px 12px; font-size: 0.85em;">💾 שמור</button>
+                            </div>
                         </div>
                         <div class="artist-actions">
-                            <button class="btn btn-primary" onclick="editArtist('${name.replace(/'/g, "\\'")}'); event.stopPropagation();" title="ערוך">✏️</button>
-                            <button class="btn btn-danger" onclick="deleteArtist('${name.replace(/'/g, "\\'")}'); event.stopPropagation();" title="מחק">🗑️</button>
+                            <button class="btn btn-primary" onclick="editEntry('${escapeHtml(name)}', '${escapeHtml(data.style || '')}', '${type}'); event.stopPropagation();" title="ערוך">✏️</button>
+                            <button class="btn btn-success" onclick="regenerateEntry('${escapeHtml(name)}', '${type}'); event.stopPropagation();" title="צור מחדש">🔄</button>
+                            <button class="btn btn-danger" onclick="deleteEntry('${escapeHtml(name)}', '${type}'); event.stopPropagation();" title="מחק">🗑️</button>
                         </div>
                     </div>
                 `;
             }).join('');
 
-            updateDisplayIndicator(filteredEntries.length);
-        }
-
-        function updateDisplayIndicator(displayedCount) {
-            const indicator = document.getElementById('displayIndicator');
-            const selectedCount = selectedArtists.size;
-            indicator.textContent = `Showing: ${displayedCount} | Selected: ${selectedCount}`;
-
-            // Update selected count in regenerate button
-            document.getElementById('selectedCount').textContent = selectedCount;
-            document.getElementById('regenerateSelectedBtn').disabled = selectedCount === 0;
-        }
-
-        function toggleArtistSelection(name, event) {
-            if (event.shiftKey && lastClickedIndex !== null) {
-                // Shift-click: select range
-                const cards = Array.from(document.querySelectorAll('.artist-card'));
-                const currentIndex = cards.findIndex(card => card.dataset.name === name);
-                const start = Math.min(lastClickedIndex, currentIndex);
-                const end = Math.max(lastClickedIndex, currentIndex);
-
-                for (let i = start; i <= end; i++) {
-                    const cardName = cards[i].dataset.name;
-                    if (event.target.checked) {
-                        selectedArtists.add(cardName);
-                    } else {
-                        selectedArtists.delete(cardName);
+            // Scroll to highlighted artist
+            if (highlightArtist) {
+                setTimeout(() => {
+                    const card = document.querySelector(`.artist-card[data-name="${highlightArtist}"]`);
+                    if (card) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
-                }
-            } else {
-                // Normal click
-                if (event.target.checked) {
-                    selectedArtists.add(name);
-                } else {
-                    selectedArtists.delete(name);
+                }, 100);
+            }
+
+            updateDisplayIndicator();
+        }
+
+        function getGenreFromStyle(style) {
+            if (!style) return 'Unknown';
+
+            // Common main genres to detect (case-insensitive)
+            const mainGenres = [
+                'Pop', 'Rock', 'Hip-Hop', 'Rap', 'Jazz', 'Blues', 'Country', 'Electronic',
+                'Dance', 'Classical', 'R&B', 'RnB', 'Soul', 'Funk', 'Reggae', 'Metal',
+                'Punk', 'Folk', 'Indie', 'Alternative', 'Gospel', 'Latin', 'Ska',
+                'Disco', 'House', 'Techno', 'Trance', 'Dubstep', 'Reggaeton',
+                'Psytrance', 'Qawwali', 'Rockabilly', 'Roll', 'Salsa', 'Score',
+                'Senegalese', 'Shoegaze', 'Son', 'Revival'
+            ];
+
+            // Convert to lowercase for comparison
+            const styleLower = style.toLowerCase();
+
+            // Check each main genre
+            for (const genre of mainGenres) {
+                const genreLower = genre.toLowerCase();
+
+                // Check if style contains this genre (as whole word or part of compound)
+                // Match patterns like: "pop", "synth-pop", "dark pop", "pop rock"
+                const regex = new RegExp(`(^|[\\s,-]|dark |synth-|indie-|alt-|electro-|dream-|art-|power-)${genreLower}([\\s,.-]|$)`, 'i');
+
+                if (regex.test(styleLower)) {
+                    return genre; // Return with proper capitalization
                 }
             }
 
-            const cards = Array.from(document.querySelectorAll('.artist-card'));
-            lastClickedIndex = cards.findIndex(card => card.dataset.name === name);
+            // If no main genre found, get first word from style
+            const firstPart = style.split(',')[0].trim();
+            const words = firstPart.split(/[\s-]/); // Split by space or hyphen
 
-            displayArtists();
-        }
-
-        function selectAllVisible() {
-            const cards = document.querySelectorAll('.artist-card');
-            cards.forEach(card => {
-                selectedArtists.add(card.dataset.name);
-            });
-            displayArtists();
-        }
-
-        function deselectAll() {
-            selectedArtists.clear();
-            lastClickedIndex = null;
-            displayArtists();
-        }
-
-        function updateStats() {
-            const totalArtists = Object.values(artistsData.artists || {}).filter(a => (a.type || 'artist') === 'artist').length;
-            const totalSongs = Object.values(artistsData.artists || {}).filter(a => a.type === 'song').length;
-            const enabled = artistsData.enabled;
-
-            document.getElementById('totalArtists').textContent = totalArtists;
-            document.getElementById('totalSongs').textContent = totalSongs;
-            document.getElementById('enabledStatus').textContent = enabled ? '✅' : '❌';
-            document.getElementById('enableToggle').checked = enabled;
+            // Capitalize first letter
+            const fallback = words[words.length - 1];
+            return fallback.charAt(0).toUpperCase() + fallback.slice(1).toLowerCase();
         }
 
         function populateGenreFilter() {
             const genres = new Set();
             Object.values(artistsData.artists || {}).forEach(artist => {
-                if (artist.style) {
-                    const styleWords = artist.style.split(/[,\s]+/);
-                    styleWords.forEach(word => {
-                        if (word.length > 2) genres.add(word);
-                    });
-                }
+                const genre = getGenreFromStyle(artist.style);
+                genres.add(genre);
             });
 
             const genreFilter = document.getElementById('genreFilter');
@@ -1470,84 +1477,165 @@
             if (currentValue) genreFilter.value = currentValue;
         }
 
-        function filterArtists() {
-            displayArtists();
+        function updateGenreFilter(artistsWithMeta) {
+            const genreFilter = document.getElementById('genreFilter');
+            const genres = new Set();
+
+            artistsWithMeta.forEach(([name, style]) => {
+                const genre = getGenreFromStyle(style);
+                genres.add(genre);
+            });
+
+            const sortedGenres = Array.from(genres).sort();
+            const currentValue = genreFilter.value;
+
+            genreFilter.innerHTML = '<option value="">All Genres</option>' +
+                sortedGenres.map(genre => `<option value="${genre}">${genre}</option>`).join('');
+
+            genreFilter.value = currentValue;
         }
 
         function filterByGenre() {
+            const genreFilter = document.getElementById('genreFilter');
+            currentGenreFilter = genreFilter.value;
             displayArtists();
+        }
+
+        function toggleArtistSelection(name, event) {
+            if (event.target.checked) {
+                selectedArtists.add(name);
+            } else {
+                selectedArtists.delete(name);
+            }
+
+            const card = document.querySelector(`.artist-card[data-name="${name}"]`);
+            if (card) {
+                card.classList.toggle('selected', event.target.checked);
+            }
+
+            updateSelectedCount();
+        }
+
+        function handleCheckboxClick(event, index) {
+            if (event.shiftKey && lastClickedIndex !== null) {
+                // Shift-click: select range
+                const start = Math.min(lastClickedIndex, index);
+                const end = Math.max(lastClickedIndex, index);
+                const cards = document.querySelectorAll('.artist-card');
+
+                for (let i = start; i <= end; i++) {
+                    const card = cards[i];
+                    if (card) {
+                        const name = card.dataset.name;
+                        const checkbox = card.querySelector('.artist-checkbox');
+                        checkbox.checked = true;
+                        selectedArtists.add(name);
+                        card.classList.add('selected');
+                    }
+                }
+
+                updateSelectedCount();
+                event.preventDefault();
+            }
+
+            lastClickedIndex = index;
+        }
+
+        function updateSelectedCount() {
+            document.getElementById('selectedCount').textContent = selectedArtists.size;
+            document.getElementById('regenerateSelectedBtn').disabled = selectedArtists.size === 0;
+            updateDisplayIndicator();
+        }
+
+        function updateDisplayIndicator() {
+            const allCards = document.querySelectorAll('.artist-card');
+            let visibleCount = 0;
+
+            allCards.forEach(card => {
+                if (card.style.display !== 'none') {
+                    visibleCount++;
+                }
+            });
+
+            const indicator = document.getElementById('displayIndicator');
+            indicator.textContent = `Showing: ${visibleCount} | Selected: ${selectedArtists.size}`;
+        }
+
+        function selectAllVisible() {
+            const allCards = document.querySelectorAll('.artist-card');
+
+            allCards.forEach(card => {
+                if (card.style.display !== 'none') {
+                    const name = card.dataset.name;
+                    const checkbox = card.querySelector('.artist-checkbox');
+
+                    selectedArtists.add(name);
+                    checkbox.checked = true;
+                    card.classList.add('selected');
+                }
+            });
+
+            updateSelectedCount();
+            showAlert(`בחרת ${selectedArtists.size} אמנים`, 'success');
+        }
+
+        function deselectAll() {
+            const allCards = document.querySelectorAll('.artist-card');
+
+            allCards.forEach(card => {
+                const checkbox = card.querySelector('.artist-checkbox');
+                checkbox.checked = false;
+                card.classList.remove('selected');
+            });
+
+            selectedArtists.clear();
+            lastClickedIndex = null;
+            updateSelectedCount();
+            showAlert('הבחירה בוטלה', 'success');
         }
 
         function sortArtists(type) {
-            const entries = Object.entries(artistsData.artists || {});
-
-            if (type === 'name') {
-                entries.sort((a, b) => a[0].localeCompare(b[0]));
-            } else if (type === 'recent') {
-                entries.sort((a, b) => {
-                    const timeA = a[1].lastModified || 0;
-                    const timeB = b[1].lastModified || 0;
-                    return timeB - timeA;
-                });
-            }
-
-            artistsData.artists = Object.fromEntries(entries);
+            currentSort = type;
             displayArtists();
         }
 
-        function selectArtist(name) {
-            const artist = artistsData.artists[name];
-            if (!artist) return;
+        function filterArtists() {
+            currentSearchTerm = document.getElementById('searchInput').value.toLowerCase();
+            displayArtists();
+        }
 
-            document.getElementById('artistName').value = name;
-            document.getElementById('artistStyle').value = artist.style || '';
-
-            // Set type
-            const type = artist.type || 'artist';
-            document.querySelector(`input[name="entry-type"][value="${type}"]`).checked = true;
-            updateEntryTypeUI();
-
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            // Highlight the card
+        function applySearchFilter() {
             const cards = document.querySelectorAll('.artist-card');
+
             cards.forEach(card => {
-                if (card.dataset.name === name) {
-                    card.classList.add('highlighted');
-                    setTimeout(() => card.classList.remove('highlighted'), 2000);
+                const name = card.dataset.name.toLowerCase();
+                if (name.includes(currentSearchTerm)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
                 }
             });
+
+            updateDisplayIndicator();
         }
 
-        function editArtist(name) {
-            selectArtist(name);
+        function toggleArtistDetails(name) {
+            const detailsDiv = document.getElementById(`details-${name}`);
+            if (detailsDiv) {
+                const isVisible = detailsDiv.style.display !== 'none';
+                detailsDiv.style.display = isVisible ? 'none' : 'block';
+            }
         }
 
-        async function deleteArtist(name) {
-            if (!confirm(`האם אתה בטוח שברצונך למחוק את "${name}"?`)) {
-                return;
-            }
+        function updateStats() {
+            const totalArtists = Object.values(artistsData.artists || {}).filter(a => (a.type || 'artist') === 'artist').length;
+            const totalSongs = Object.values(artistsData.artists || {}).filter(a => a.type === 'song').length;
+            const enabled = artistsData.enabled;
 
-            try {
-                const response = await fetch(`${API_URL}/api/artists/${encodeURIComponent(name)}`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password: sessionPassword })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    showAlert(`✅ ${name} נמחק בהצלחה!`, 'success');
-                    selectedArtists.delete(name);
-                    loadArtists();
-                } else {
-                    throw new Error(result.error || 'Failed to delete');
-                }
-            } catch (error) {
-                showAlert('שגיאה: ' + error.message, 'error');
-            }
+            document.getElementById('totalArtists').textContent = totalArtists;
+            document.getElementById('totalSongs').textContent = totalSongs;
+            document.getElementById('enabledStatus').textContent = enabled ? '✅' : '❌';
+            document.getElementById('enableToggle').checked = enabled;
         }
 
         function updateEntryTypeUI() {
@@ -1609,6 +1697,163 @@
             } finally {
                 saveBtn.textContent = originalText;
                 saveBtn.disabled = false;
+            }
+        }
+
+        async function saveInlineEdit(name, type) {
+            const textarea = document.getElementById(`edit-${name}`);
+            const newStyle = textarea.value.trim();
+
+            if (!newStyle) {
+                showAlert('הסטייל לא יכול להיות ריק', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/artists`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, style: newStyle, type, password: sessionPassword })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert(`ה${type === 'artist' ? 'אמן' : 'שיר'} עודכן בהצלחה!`, 'success');
+
+                    // Reload and keep the entry in view with search filter
+                    await loadArtists();
+
+                    // Keep search focused on this entry
+                    document.getElementById('searchInput').value = name;
+                    currentSearchTerm = name.toLowerCase();
+
+                    displayArtists(name);
+                } else {
+                    showAlert(data.error || 'שגיאה בשמירה', 'error');
+                }
+            } catch (error) {
+                showAlert('שגיאת רשת', 'error');
+            }
+        }
+
+        async function deleteEntry(name, type) {
+            const typeLabel = type === 'artist' ? 'אמן' : 'שיר';
+
+            if (!confirm(`האם אתה בטוח שברצונך למחוק את ה${typeLabel} ${name}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/artists/${encodeURIComponent(name)}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: sessionPassword })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert(`ה${typeLabel} נמחק בהצלחה`, 'success');
+                    selectedArtists.delete(name);
+                    loadArtists();
+                } else {
+                    showAlert(result.error || 'שגיאה במחיקה', 'error');
+                }
+            } catch (error) {
+                showAlert('שגיאת רשת', 'error');
+            }
+        }
+
+        function editEntry(name, style, type) {
+            document.getElementById('artistName').value = name;
+            document.getElementById('artistStyle').value = style;
+
+            // Set the correct radio button
+            const radioButton = document.querySelector(`input[name="entry-type"][value="${type}"]`);
+            if (radioButton) {
+                radioButton.checked = true;
+                updateEntryTypeUI();
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function regenerateEntry(name, type) {
+            // Get API settings
+            const provider = document.getElementById('aiProvider').value;
+            const model = document.getElementById('llmProvider').value;
+            const apiKeyInput = document.getElementById('apiKey').value.trim();
+
+            // Get API key
+            let apiKey = apiKeyInput || loadApiKeyFromLocalStorage(provider);
+
+            if (!apiKey) {
+                showAlert('API Key חסר! הזן API key בהגדרות.', 'error');
+                return;
+            }
+
+            // Find the artist card to show loading state
+            const cards = document.querySelectorAll('.artist-card');
+            let targetCard = null;
+            for (const card of cards) {
+                if (card.dataset.name === name) {
+                    targetCard = card;
+                    break;
+                }
+            }
+
+            if (targetCard) {
+                const styleDiv = targetCard.querySelector('.artist-style');
+                const originalStyle = styleDiv.textContent;
+                styleDiv.innerHTML = '<span style="color: #667eea;">⏳ Generating...</span>';
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        type,
+                        provider,
+                        model,
+                        apiKey,
+                        password: sessionPassword
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    const newStyle = result.style;
+
+                    // Auto-save the new style
+                    const saveResponse = await fetch(`${API_URL}/api/artists`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name,
+                            style: newStyle,
+                            type,
+                            password: sessionPassword
+                        })
+                    });
+
+                    if (saveResponse.ok) {
+                        showAlert(`✨ "${name}" regenerated and saved!`, 'success');
+                        loadArtists(); // Reload the list
+                    } else {
+                        throw new Error('Failed to save regenerated style');
+                    }
+                } else {
+                    throw new Error(result.error || 'Failed to generate');
+                }
+            } catch (error) {
+                showAlert('שגיאה: ' + error.message, 'error');
+                if (targetCard) {
+                    loadArtists(); // Reload to restore original
+                }
             }
         }
 
@@ -1721,8 +1966,36 @@
             localStorage.setItem('aiProvider', provider);
             localStorage.setItem('llmProvider', model);
 
+            // Calculate stats
+            let newCount = 0;
+            let existingCount = 0;
+            let skipCount = 0;
+
+            names.forEach(name => {
+                const artist = artistsData.artists[name];
+                if (artist?.style) {
+                    existingCount++;
+                    if (!regenerateExisting) skipCount++;
+                } else {
+                    newCount++;
+                }
+            });
+
+            // Update stats
+            updateProgressStats(names.length, newCount, existingCount, skipCount);
+
             // Open progress modal
-            openProgressModal(names, regenerateExisting);
+            openProgressModal();
+
+            // Clear and populate progress list
+            const progressList = document.getElementById('progressList');
+            progressList.innerHTML = '';
+
+            names.forEach(name => {
+                const artist = artistsData.artists[name];
+                const willSkip = artist?.style && !regenerateExisting;
+                addProgressItem(name, willSkip ? 'skipped' : 'pending');
+            });
 
             // Process batch
             for (let i = 0; i < names.length; i++) {
@@ -1730,16 +2003,16 @@
                 const artist = artistsData.artists[name];
                 const type = artist?.type || 'artist';
 
+                // Check if should skip
+                if (!regenerateExisting && artist?.style) {
+                    updateProgressItem(name, 'skipped', 'Already has style');
+                    updateProgressBar(i + 1, names.length);
+                    continue;
+                }
+
                 updateProgressItem(name, 'processing', 'Generating...');
 
                 try {
-                    // Check if should skip
-                    if (!regenerateExisting && artist?.style) {
-                        updateProgressItem(name, 'skipped', 'Already has style');
-                        updateProgressBar(i + 1, names.length);
-                        continue;
-                    }
-
                     const response = await fetch(`${API_URL}/api/generate`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1768,7 +2041,7 @@
                             })
                         });
 
-                        updateProgressItem(name, 'success', 'Generated!');
+                        updateProgressItem(name, 'success', 'Generated!', result.style);
                     } else {
                         throw new Error(result.error || 'Failed');
                     }
@@ -1786,77 +2059,19 @@
             document.getElementById('closeProgressBtn').style.display = 'block';
         }
 
-        function openProgressModal(names, regenerateExisting) {
-            const modal = document.getElementById('progressModal');
-            const progressList = document.getElementById('progressList');
+        function openProgressModal() {
+            document.getElementById('progressModal').classList.add('active');
+        }
 
-            // Calculate stats
-            let newCount = 0;
-            let existingCount = 0;
-            let skipCount = 0;
+        function closeProgressModal() {
+            document.getElementById('progressModal').classList.remove('active');
+        }
 
-            names.forEach(name => {
-                const artist = artistsData.artists[name];
-                if (artist?.style) {
-                    existingCount++;
-                    if (!regenerateExisting) skipCount++;
-                } else {
-                    newCount++;
-                }
-            });
-
-            document.getElementById('statTotal').textContent = names.length;
+        function updateProgressStats(total, newCount, existingCount, skipCount) {
+            document.getElementById('statTotal').textContent = total;
             document.getElementById('statNew').textContent = newCount;
             document.getElementById('statExisting').textContent = existingCount;
             document.getElementById('statSkip').textContent = skipCount;
-
-            // Create progress items
-            progressList.innerHTML = names.map(name => {
-                const artist = artistsData.artists[name];
-                const type = artist?.type || 'artist';
-                const icon = type === 'song' ? '🎵' : '🎤';
-                const hasStyle = artist?.style;
-                const willSkip = hasStyle && !regenerateExisting;
-                const status = willSkip ? 'skipped' : 'pending';
-                const statusText = willSkip ? 'Will skip (has style)' : 'Waiting...';
-
-                return `
-                    <div class="progress-item ${status}" data-name="${name}">
-                        <div class="progress-item-row">
-                            <div class="progress-item-icon">${icon}</div>
-                            <div class="progress-item-name">${name}</div>
-                            <div class="progress-item-status">${statusText}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-
-            document.getElementById('progressBar').style.width = '0%';
-            document.getElementById('progressBar').textContent = '0%';
-            document.getElementById('closeProgressBtn').style.display = 'none';
-
-            modal.classList.add('active');
-        }
-
-        function updateProgressItem(name, status, statusText) {
-            const item = document.querySelector(`.progress-item[data-name="${name}"]`);
-            if (!item) return;
-
-            item.className = `progress-item ${status}`;
-
-            const icons = {
-                pending: '⏳',
-                processing: '⚙️',
-                success: '✅',
-                skipped: '⏭️',
-                failed: '❌'
-            };
-
-            item.querySelector('.progress-item-icon').textContent = icons[status] || '⏳';
-            item.querySelector('.progress-item-status').textContent = statusText;
-
-            // Scroll to current item
-            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function updateProgressBar(current, total) {
@@ -1866,8 +2081,96 @@
             progressBar.textContent = percentage + '%';
         }
 
-        function closeProgressModal() {
-            document.getElementById('progressModal').classList.remove('active');
+        function addProgressItem(artistName, status = 'pending') {
+            const progressList = document.getElementById('progressList');
+            const item = document.createElement('div');
+            item.className = `progress-item ${status}`;
+            item.id = `progress-${artistName.replace(/\s+/g, '-')}`;
+            item.style.cursor = 'pointer';
+
+            const icons = {
+                pending: '⏸️',
+                processing: '⏳',
+                success: '✅',
+                skipped: '⏭️',
+                failed: '❌'
+            };
+
+            const statusText = {
+                pending: 'Waiting...',
+                processing: 'Generating...',
+                success: 'Success',
+                skipped: 'Skipped',
+                failed: 'Failed'
+            };
+
+            item.innerHTML = `
+                <div class="progress-item-row">
+                    <div class="progress-item-icon">${icons[status]}</div>
+                    <div class="progress-item-name">${artistName}</div>
+                    <div class="progress-item-status">${statusText[status]}</div>
+                </div>
+                <div class="progress-item-details" style="display: none; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; font-size: 0.85em; color: #495057; white-space: pre-wrap; word-break: break-word;"></div>
+            `;
+
+            // Add click handler to toggle details
+            item.addEventListener('click', () => {
+                const details = item.querySelector('.progress-item-details');
+                if (details && details.textContent) {
+                    details.style.display = details.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+
+            progressList.appendChild(item);
+        }
+
+        function updateProgressItem(artistName, status, statusMessage = null, generatedStyle = null) {
+            const itemId = `progress-${artistName.replace(/\s+/g, '-')}`;
+            const item = document.getElementById(itemId);
+            if (!item) return;
+
+            const icons = {
+                pending: '⏸️',
+                processing: '⏳',
+                success: '✅',
+                skipped: '⏭️',
+                failed: '❌'
+            };
+
+            const statusText = statusMessage || {
+                pending: 'Waiting...',
+                processing: 'Generating...',
+                success: 'Success',
+                skipped: 'Skipped',
+                failed: 'Failed'
+            }[status];
+
+            item.className = `progress-item ${status}`;
+
+            // Get existing details if any
+            const existingDetails = item.querySelector('.progress-item-details');
+            const existingDetailsContent = existingDetails ? existingDetails.textContent : '';
+            const existingDetailsDisplay = existingDetails ? existingDetails.style.display : 'none';
+
+            item.innerHTML = `
+                <div class="progress-item-row">
+                    <div class="progress-item-icon">${icons[status]}</div>
+                    <div class="progress-item-name">${artistName}</div>
+                    <div class="progress-item-status">${statusText}</div>
+                </div>
+                <div class="progress-item-details" style="display: ${existingDetailsDisplay}; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 4px; font-size: 0.85em; color: #495057; white-space: pre-wrap; word-break: break-word;">${generatedStyle || existingDetailsContent}</div>
+            `;
+
+            // Re-add click handler
+            item.addEventListener('click', () => {
+                const details = item.querySelector('.progress-item-details');
+                if (details && details.textContent) {
+                    details.style.display = details.style.display === 'none' ? 'block' : 'none';
+                }
+            });
+
+            // Scroll to current item
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         async function downloadJSON() {
@@ -2093,6 +2396,20 @@
                 saveBtn.textContent = originalText;
                 saveBtn.disabled = false;
             }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/'/g, "\\'");
+        }
+
+        function normalizeArtistName(name) {
+            return name
+                .normalize('NFD') // Decompose combined characters
+                .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+                .toLowerCase()
+                .trim();
         }
 
         function showAlert(message, type) {
