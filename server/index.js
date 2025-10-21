@@ -326,27 +326,28 @@ CRITICAL INSTRUCTIONS:
 2. Focus on: Genre, Sub-genre, Tempo feel, Instrumentation, Vocal style, Mood, Production style
 3. Be SPECIFIC and DETAILED - avoid generic terms
 4. Include technical music terms when relevant
-5. Keep it concise but comprehensive (aim for 8-15 descriptive elements)
+5. Keep it concise but comprehensive (aim for 6-11 descriptive elements)
 6. Do NOT include the artist name in the output
 7. Do NOT use phrases like "in the style of" or "similar to"
 8. Output ONLY the comma-separated style description, no quotes, no explanations
-9. This can be used for a single artist or as part of processing multiple artists in a prompt
+9. MAKE SURE you state the artist decade that defines the kind of music (like "90's [genre]")
 
 FORMAT RULES:
 - Comma-separated list
 - Start with main genre(s)
 - Include specific instruments
 - Describe vocal characteristics (if applicable)
-- Add mood/feeling descriptors
 - Include tempo indicators (e.g., upbeat, slow, moderate)
 - Mention production style (e.g., polished, raw, lo-fi, orchestral)
+- DO NOT INCLUDE ANY sub-element that not PERFECTLY matched the majority of this artist repertiore
+- NEVER USE general description, "rock" can mean 1000 different sub-genres that not matching the same for different artist, be PERCISE.
 
-EXAMPLES OF GOOD OUTPUT:
-Pop Rock, Piano-driven, Storytelling lyrics, Upbeat, Male vocals, 80s production, Melodic, Catchy hooks, Anthemic choruses
-Soul, Emotional, Torch-Lounge, Powerful female vocals, Gospel influences, R&B elements, Melancholic, Piano and strings
+EXAMPLES OF GOOD settings for outputs (just inspirational, USE correct settings):
+Piano-driven pop, Joyful Gospel with choir vocals, clapping, and uplifting organ melody, Male vocals, 80s production, Melodic, Catchy hooks, Anthemic choruses
+Soul, Emotional, Torch-Lounge, Powerful female vocals, Gospel influences, Choir background vocals, Melancholic, Piano and strings
 Alternative Rock, Grunge, Dark, Melodic, Heavy guitar riffs, Baritone male vocals, 90s Seattle sound, Introspective
 EDM, Melodic, Euphoric, Build-ups and drops, Synth-heavy, Festival anthems, Emotional vocal samples, Progressive house
-
+happy choir, energetic soul, gospel, jazz, Christian choir, worship, rhythmical, blues, motown piano, funk pop, brass energetic section, eurodance 80's, disco soul, epic disco, funk, energetic trombones, strings stabs, energetic strings, syncopated piano, brass hits
 EXAMPLES OF BAD OUTPUT:
 Like Billy Joel ❌
 Similar to Adele's style ❌
@@ -367,11 +368,12 @@ CRITICAL INSTRUCTIONS:
 2. Focus on: Genre, Sub-genre, Song structure, Key musical elements, Vocal delivery, Mood, Specific instrumentation, Production style
 3. Be SPECIFIC and DETAILED - describe what makes THIS SONG unique
 4. Include technical music terms when relevant
-5. Keep it concise but comprehensive (aim for 10-20 descriptive elements)
+5. Keep it concise but comprehensive (aim for 8-15 descriptive elements)
 6. Do NOT include the song name or artist name in the output
 7. Do NOT use phrases like "in the style of" or "similar to"
 8. Output ONLY the comma-separated style description, no quotes, no explanations
 9. Focus on the SPECIFIC characteristics of this particular song, not the artist's general style
+10. MAKE SURE you state the exact year of this song (or decade) (like "1993's [genre])
 
 FORMAT RULES:
 - Comma-separated list
@@ -382,11 +384,15 @@ FORMAT RULES:
 - Include tempo and rhythm patterns
 - Mention production style and sonic qualities
 - Highlight unique elements that define THIS song
+- DO NOT INCLUDE ANY sub-element that not PERFECTLY matching this song, and can confuse the prompt
+- NEVER USE general description, "rock" can mean 1000 different sub-genres that not matching the same for different artist, be PERCISE.
 
-EXAMPLES OF GOOD OUTPUT (for specific songs):
-Rock opera, Multi-section structure, Piano ballad intro, Guitar-driven middle section, Operatic vocals, Harmonized backing vocals, Dramatic dynamics, Tempo changes, British rock, Theatrical, Epic, Six-minute composition
-Grunge, Dark, Heavy distorted guitars, Drop-D tuning, Quiet verse loud chorus dynamic, Apathetic vocal delivery, Nihilistic mood, Slow tempo, Raw production, Iconic opening riff
-Ballad, Piano-driven, Powerful emotional female vocals, Gospel-influenced, Slow to moderate tempo, Orchestral strings, Dynamic build-up, Melancholic to triumphant, Modern production, Vocal runs, Heartbreak theme
+EXAMPLES OF GOOD settings for outputs (just inspirational, USE correct settings):
+Piano-driven pop, Joyful Gospel with choir vocals, clapping, and uplifting organ melody, Male vocals, 80s production, Melodic, Catchy hooks, Anthemic choruses
+Soul, Emotional, Torch-Lounge, Powerful female vocals, Gospel influences, Choir background vocals, Melancholic, Piano and strings
+Alternative Rock, Grunge, Dark, Melodic, Heavy guitar riffs, Baritone male vocals, 90s Seattle sound, Introspective
+EDM, Melodic, Euphoric, Build-ups and drops, Synth-heavy, Festival anthems, Emotional vocal samples, Progressive house
+happy choir, energetic soul, gospel, jazz, Christian choir, worship, rhythmical, blues, motown piano, funk pop, brass energetic section, eurodance 80's, disco soul, epic disco, funk, energetic trombones, strings stabs, energetic strings, syncopated piano, brass hits
 
 EXAMPLES OF BAD OUTPUT:
 Like Queen ❌
