@@ -1353,37 +1353,50 @@
         function displayArtists(highlightArtist = null) {
             const artistsList = document.getElementById('artistsList');
 
-            const entries = Object.entries(artistsData.artists || {});
+            // Get both artists and songs
+            let artists = Object.entries(artistsData.artists || {}).map(([name, style]) => ({name, style, type: 'artist'}));
+            let songs = Object.entries(artistsData.songs || {}).map(([name, style]) => ({name, style, type: 'song'}));
+            let allEntries = [...artists, ...songs];
 
-            let filteredEntries = entries.filter(([name, data]) => {
+            if (allEntries.length === 0) {
+                artistsList.innerHTML = '<p style="text-align: center; color: #6c757d; padding: 40px;">אין אמנים או שירים במאגר</p>';
+                return;
+            }
+
+            // Add timestamps from metadata
+            const entriesWithMeta = allEntries.map(entry => {
+                const timestamp = entry.type === 'artist'
+                    ? artistsData.metadata?.[entry.name]?.timestamp || 0
+                    : artistsData.metadata?.songs?.[entry.name]?.timestamp || 0;
+                return {...entry, timestamp};
+            });
+
+            // Filter
+            let filteredEntries = entriesWithMeta.filter(entry => {
                 const matchesSearch = !currentSearchTerm ||
-                    name.toLowerCase().includes(currentSearchTerm) ||
-                    (data.style && data.style.toLowerCase().includes(currentSearchTerm));
-                const genre = getGenreFromStyle(data.style);
+                    entry.name.toLowerCase().includes(currentSearchTerm) ||
+                    entry.style.toLowerCase().includes(currentSearchTerm);
+                const genre = getGenreFromStyle(entry.style);
                 const matchesGenre = !currentGenreFilter || genre === currentGenreFilter;
                 return matchesSearch && matchesGenre;
             });
 
             // Sort based on current sort mode
             if (currentSort === 'name') {
-                filteredEntries.sort((a, b) => a[0].localeCompare(b[0]));
+                filteredEntries.sort((a, b) => a.name.localeCompare(b.name));
             } else if (currentSort === 'recent') {
-                filteredEntries.sort((a, b) => {
-                    const timeA = a[1].lastModified || 0;
-                    const timeB = b[1].lastModified || 0;
-                    return timeB - timeA;
-                });
+                filteredEntries.sort((a, b) => b.timestamp - a.timestamp);
             }
 
             // Populate genre filter
             populateGenreFilter();
 
-            artistsList.innerHTML = filteredEntries.map(([name, data], index) => {
+            artistsList.innerHTML = filteredEntries.map((entry, index) => {
+                const {name, style, type, timestamp} = entry;
                 const isSelected = selectedArtists.has(name);
                 const isHighlighted = highlightArtist === name;
-                const type = data.type || 'artist';
                 const icon = type === 'song' ? '🎵' : '🎤';
-                const genre = getGenreFromStyle(data.style);
+                const genre = getGenreFromStyle(style);
 
                 return `
                     <div class="artist-card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}" data-name="${name}" data-index="${index}" data-genre="${genre}" data-type="${type}">
@@ -1393,14 +1406,14 @@
                                onclick="handleCheckboxClick(event, ${index})">
                         <div class="artist-info" onclick="toggleArtistDetails('${escapeHtml(name)}')">
                             <div class="artist-name">${icon} ${name}</div>
-                            <div class="artist-style" title="${escapeHtml(data.style || '')}">${data.style || 'אין תיאור'}</div>
+                            <div class="artist-style" title="${escapeHtml(style)}">${style}</div>
                             <div class="artist-details" id="details-${escapeHtml(name)}" style="display: none;">
-                                <textarea class="edit-textarea" id="edit-${escapeHtml(name)}" data-type="${type}" style="width: 100%; margin-top: 10px; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; font-size: 0.9em;">${escapeHtml(data.style || '')}</textarea>
+                                <textarea class="edit-textarea" id="edit-${escapeHtml(name)}" data-type="${type}" style="width: 100%; margin-top: 10px; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; font-size: 0.9em;">${escapeHtml(style)}</textarea>
                                 <button class="btn btn-primary" onclick="saveInlineEdit('${escapeHtml(name)}', '${type}'); event.stopPropagation();" style="margin-top: 8px; padding: 4px 12px; font-size: 0.85em;">💾 שמור</button>
                             </div>
                         </div>
                         <div class="artist-actions">
-                            <button class="btn btn-primary" onclick="editEntry('${escapeHtml(name)}', '${escapeHtml(data.style || '')}', '${type}'); event.stopPropagation();" title="ערוך">✏️</button>
+                            <button class="btn btn-primary" onclick="editEntry('${escapeHtml(name)}', '${escapeHtml(style)}', '${type}'); event.stopPropagation();" title="ערוך">✏️</button>
                             <button class="btn btn-success" onclick="regenerateEntry('${escapeHtml(name)}', '${type}'); event.stopPropagation();" title="צור מחדש">🔄</button>
                             <button class="btn btn-danger" onclick="deleteEntry('${escapeHtml(name)}', '${type}'); event.stopPropagation();" title="מחק">🗑️</button>
                         </div>
@@ -1628,8 +1641,8 @@
         }
 
         function updateStats() {
-            const totalArtists = Object.values(artistsData.artists || {}).filter(a => (a.type || 'artist') === 'artist').length;
-            const totalSongs = Object.values(artistsData.artists || {}).filter(a => a.type === 'song').length;
+            const totalArtists = Object.keys(artistsData.artists || {}).length;
+            const totalSongs = Object.keys(artistsData.songs || {}).length;
             const enabled = artistsData.enabled;
 
             document.getElementById('totalArtists').textContent = totalArtists;
