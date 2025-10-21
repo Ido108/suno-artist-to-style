@@ -1887,205 +1887,436 @@
         }
 
         async function generateStyle() {
-            const name = document.getElementById('artistName').value.trim();
-            const type = document.querySelector('input[name="entry-type"]:checked').value;
-
-            if (!name) {
-                showAlert(`${type === 'song' ? 'שם השיר' : 'שם האמן'} חובה!`, 'error');
-                return;
-            }
-
-            // Get API settings
-            const provider = document.getElementById('aiProvider').value;
-            const model = document.getElementById('llmProvider').value;
-            const apiKeyInput = document.getElementById('apiKey').value.trim();
-            const shouldSaveKey = document.getElementById('saveApiKey').checked;
-
-            // Get API key from input or localStorage
-            let apiKey = apiKeyInput || loadApiKeyFromLocalStorage(provider);
-
-            if (!apiKey) {
-                showAlert('API Key חסר! הזן API key בהגדרות.', 'error');
-                return;
-            }
-
-            // Save API key if checkbox is checked and there's a new key
-            if (shouldSaveKey && apiKeyInput) {
-                saveApiKeyToLocalStorage(provider, apiKeyInput);
-            }
-
-            // Save provider and model to localStorage
-            localStorage.setItem('aiProvider', provider);
-            localStorage.setItem('llmProvider', model);
-
+            const artistNameInput = document.getElementById('artistName').value.trim();
+            const llmProvider = document.getElementById('llmProvider').value;
+            const apiKey = document.getElementById('apiKey').value.trim();
             const generateBtn = document.getElementById('generateBtn');
-            const originalText = generateBtn.textContent;
+            const originalText = generateBtn.innerHTML;
+            const entryType = document.querySelector('input[name="entry-type"]:checked').value;
+            const isArtist = entryType === 'artist';
+
+            if (!artistNameInput) {
+                showAlert(`נא להזין שם ${isArtist ? 'אמן' : 'שיר'} תחילה`, 'error');
+                return;
+            }
+
+            // Check if API key is available
+            if (!apiKey) {
+                showAlert(`דרוש API key. הזן במקטע "הגדרות AI Generator".`, 'error');
+                return;
+            }
+
+            // Auto-save API key if checkbox is checked
+            const saveApiKeyCheckbox = document.getElementById('saveApiKey');
+            if (saveApiKeyCheckbox.checked && apiKey) {
+                const provider = document.getElementById('aiProvider').value;
+                saveApiKeyToLocalStorage(provider, apiKey);
+                localStorage.setItem('aiProvider', provider);
+                localStorage.setItem('llmProvider', llmProvider);
+            }
+
+            // Check if multiple entries (separated by commas)
+            const artistNames = artistNameInput.split(',').map(name => name.trim()).filter(name => name.length > 0);
+
+            if (artistNames.length === 0) {
+                showAlert(`נא להזין שם ${isArtist ? 'אמן' : 'שיר'} תקין`, 'error');
+                return;
+            }
+
+            // Check regenerate existing checkbox
+            const regenerateExisting = document.getElementById('regenerateExisting').checked;
+
+            // Show loading state
             generateBtn.disabled = true;
-            generateBtn.textContent = '⏳ יוצר...';
+            generateBtn.innerHTML = `⏳ מנתח נתונים...`;
+
+            let successCount = 0;
+            let failCount = 0;
+            let skippedCount = 0;
+            let regeneratedCount = 0;
+            let newCount = 0;
 
             try {
-                const response = await fetch(`${API_URL}/api/generate-style`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        artistName: name,
-                        password: sessionPassword,
-                        llmProvider: model,
-                        apiKey: apiKey,
-                        type: type
-                    })
-                });
+                // PHASE 1: Load fresh data and analyze
+                console.log('🔄 Loading fresh data from server...');
+                const artistsResponse = await fetch(`${API_URL}/api/artists`);
+                const currentArtistsData = await artistsResponse.json();
+                console.log(`📊 Loaded ${Object.keys(currentArtistsData.artists || {}).length} artists, ${Object.keys(currentArtistsData.songs || {}).length} songs`);
+                console.log(`⚙️ Regenerate existing: ${regenerateExisting ? 'YES' : 'NO'}`);
 
-                const result = await response.json();
+                // PHASE 2: Pre-check all entries and categorize
+                const collection = isArtist ? (currentArtistsData.artists || {}) : (currentArtistsData.songs || {});
 
-                if (response.ok) {
-                    document.getElementById('artistStyle').value = result.generatedStyle;
-                    showAlert(`✅ סטייל נוצר בהצלחה עבור ${name}!`, 'success');
-                } else {
-                    throw new Error(result.error || 'Failed to generate');
+                let existingArtists = [];
+                let newArtists = [];
+                let willSkip = 0;
+
+                for (const artistName of artistNames) {
+                    // Case-insensitive + diacritic-insensitive check
+                    const nameNormalized = normalizeArtistName(artistName);
+                    const artistExists = Object.keys(collection).find(
+                        key => normalizeArtistName(key) === nameNormalized
+                    );
+
+                    if (artistExists) {
+                        existingArtists.push(artistName);
+                        if (!regenerateExisting) {
+                            willSkip++;
+                        }
+                    } else {
+                        newArtists.push(artistName);
+                    }
                 }
+
+                console.log(`📋 Analysis: ${newArtists.length} new, ${existingArtists.length} existing, ${willSkip} will skip`);
+
+                // PHASE 3: Open progress modal and show stats
+                document.getElementById('progressList').innerHTML = ''; // Clear previous items
+                openProgressModal();
+                updateProgressStats(artistNames.length, newArtists.length, existingArtists.length, willSkip);
+
+                // PHASE 4: Add all entries to progress list as pending
+                for (const artistName of artistNames) {
+                    addProgressItem(artistName, 'pending');
+                }
+
+                // PHASE 5: Process each entry
+                generateBtn.innerHTML = `⏳ מעבד ${artistNames.length} ${isArtist ? 'אמנים' : 'שירים'}...`;
+                let processedCount = 0;
+
+                for (const artistName of artistNames) {
+                    try {
+                        // Check if entry already exists (case-insensitive + diacritic-insensitive)
+                        const nameNormalized = normalizeArtistName(artistName);
+                        const artistExists = Object.keys(collection).find(
+                            key => normalizeArtistName(key) === nameNormalized
+                        );
+
+                        // Skip if exists and regenerateExisting is not checked
+                        if (artistExists && !regenerateExisting) {
+                            skippedCount++;
+                            processedCount++;
+                            const existingStyle = collection[artistExists];
+                            updateProgressItem(artistName, 'skipped', 'Already exists', existingStyle);
+                            updateProgressBar(processedCount, artistNames.length);
+                            console.log(`⏭️ "${artistName}": SKIPPED`);
+                            continue;
+                        }
+
+                        // Update status to processing
+                        updateProgressItem(artistName, 'processing');
+
+                        // Generate style for this entry
+                        const response = await fetch(`${API_URL}/api/generate-style`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                artistName,
+                                password: sessionPassword,
+                                llmProvider,
+                                apiKey: apiKey,
+                                type: entryType
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            const generatedStyle = data.generatedStyle;
+
+                            // Auto-save this entry
+                            const saveEndpoint = isArtist ? '/api/artists' : '/api/songs';
+                            const saveResponse = await fetch(`${API_URL}${saveEndpoint}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    name: artistName,
+                                    style: generatedStyle,
+                                    password: sessionPassword
+                                })
+                            });
+
+                            if (saveResponse.ok) {
+                                successCount++;
+                                processedCount++;
+                                if (artistExists) {
+                                    regeneratedCount++;
+                                    updateProgressItem(artistName, 'success', 'Regenerated', generatedStyle);
+                                    console.log(`🔄 ${artistName}: regenerated`);
+                                } else {
+                                    newCount++;
+                                    updateProgressItem(artistName, 'success', 'Created new', generatedStyle);
+                                    console.log(`✓ ${artistName}: created new`);
+                                }
+                                updateProgressBar(processedCount, artistNames.length);
+                            } else {
+                                failCount++;
+                                processedCount++;
+                                updateProgressItem(artistName, 'failed', 'Save failed', generatedStyle);
+                                updateProgressBar(processedCount, artistNames.length);
+                                console.error(`✗ ${artistName}: save failed`);
+                            }
+                        } else {
+                            failCount++;
+                            processedCount++;
+                            updateProgressItem(artistName, 'failed', data.error || 'Generation failed', null);
+                            updateProgressBar(processedCount, artistNames.length);
+                            console.error(`✗ ${artistName}: ${data.error}`);
+                        }
+                    } catch (error) {
+                        failCount++;
+                        processedCount++;
+                        updateProgressItem(artistName, 'failed', error.message, null);
+                        updateProgressBar(processedCount, artistNames.length);
+                        console.error(`✗ ${artistName}: ${error.message}`);
+                    }
+                }
+
+                // PHASE 6: Complete - show close button
+                document.getElementById('closeProgressBtn').style.display = 'block';
+
+                // Clear the input fields
+                document.getElementById('artistName').value = '';
+                document.getElementById('artistStyle').value = '';
+
+                // Reload artists list
+                loadArtists();
+
+                // Build detailed result message
+                let resultParts = [];
+                if (newCount > 0) resultParts.push(`✨ ${newCount} חדשים`);
+                if (regeneratedCount > 0) resultParts.push(`🔄 ${regeneratedCount} regenerated`);
+                if (skippedCount > 0) resultParts.push(`⏭️ ${skippedCount} נדלגו`);
+                if (failCount > 0) resultParts.push(`❌ ${failCount} נכשלו`);
+
+                const resultMessage = resultParts.join(' | ');
+
+                console.log(`✅ COMPLETE! ${resultMessage}`);
+
+                // Success animation on button
+                if (successCount > 0) {
+                    generateBtn.innerHTML = `✅ הושלם: ${successCount} success`;
+                    generateBtn.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+                } else if (skippedCount > 0) {
+                    generateBtn.innerHTML = `⏭️ ${skippedCount} נדלגו`;
+                    generateBtn.style.background = 'linear-gradient(135deg, #6c757d 0%, #5a6268 100%)';
+                } else {
+                    generateBtn.innerHTML = `❌ ${failCount} נכשלו`;
+                    generateBtn.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
+                }
+
+                setTimeout(() => {
+                    generateBtn.innerHTML = originalText;
+                    generateBtn.style.background = '';
+                    generateBtn.disabled = false;
+                }, 3000);
+
             } catch (error) {
-                showAlert('שגיאה: ' + error.message, 'error');
-            } finally {
-                generateBtn.textContent = originalText;
+                console.error('❌ Critical error:', error);
+                showAlert('שגיאה כללית: ' + error.message, 'error');
+                closeProgressModal();
+                generateBtn.innerHTML = originalText;
                 generateBtn.disabled = false;
             }
         }
 
         async function regenerateSelected() {
             if (selectedArtists.size === 0) {
-                showAlert('לא נבחרו פריטים!', 'error');
+                showAlert('לא נבחרו אמנים', 'error');
                 return;
             }
 
-            const names = Array.from(selectedArtists);
-            await regenerateBatch(names);
-        }
-
-        async function regenerateAll() {
-            if (!confirm('האם אתה בטוח? זה ייצור מחדש את כל הסטיילים!')) {
-                return;
-            }
-
-            const names = Object.keys(artistsData.artists || {});
-            await regenerateBatch(names);
-        }
-
-        async function regenerateBatch(names) {
-            // Get API settings
-            const provider = document.getElementById('aiProvider').value;
-            const model = document.getElementById('llmProvider').value;
-            const apiKeyInput = document.getElementById('apiKey').value.trim();
-            const shouldSaveKey = document.getElementById('saveApiKey').checked;
-            const regenerateExisting = document.getElementById('regenerateExisting').checked;
-
-            // Get API key
-            let apiKey = apiKeyInput || loadApiKeyFromLocalStorage(provider);
+            const llmProvider = document.getElementById('llmProvider').value;
+            const apiKey = document.getElementById('apiKey').value.trim();
 
             if (!apiKey) {
-                showAlert('API Key חסר! הזן API key בהגדרות.', 'error');
+                showAlert('דרוש API key. הזן במקטע "הגדרות AI Generator".', 'error');
                 return;
             }
 
-            // Save settings
-            if (shouldSaveKey && apiKeyInput) {
-                saveApiKeyToLocalStorage(provider, apiKeyInput);
-            }
-            localStorage.setItem('aiProvider', provider);
-            localStorage.setItem('llmProvider', model);
+            const regenerateBtn = document.getElementById('regenerateSelectedBtn');
+            const originalText = regenerateBtn.innerHTML;
+            regenerateBtn.disabled = true;
+            regenerateBtn.innerHTML = `⏳ מעבד ${selectedArtists.size} אמנים...`;
 
-            // Calculate stats
-            let newCount = 0;
-            let existingCount = 0;
-            let skipCount = 0;
+            let successCount = 0;
+            let failCount = 0;
 
-            names.forEach(name => {
-                const exists = artistsData.artists?.[name] || artistsData.songs?.[name];
-                if (exists) {
-                    existingCount++;
-                    if (!regenerateExisting) skipCount++;
-                } else {
-                    newCount++;
-                }
-            });
+            try {
+                const selectedNames = Array.from(selectedArtists);
 
-            // Update stats
-            updateProgressStats(names.length, newCount, existingCount, skipCount);
+                for (const artistName of selectedNames) {
+                    try {
+                        // Find the card and show loading
+                        const card = document.querySelector(`.artist-card[data-name="${artistName}"]`);
+                        const entryType = card ? card.dataset.type : 'artist';
+                        const isArtist = entryType === 'artist';
 
-            // Open progress modal
-            openProgressModal();
+                        if (card) {
+                            const styleDiv = card.querySelector('.artist-style');
+                            styleDiv.innerHTML = '<span style="color: #667eea;">⏳ Generating...</span>';
+                        }
 
-            // Clear and populate progress list
-            const progressList = document.getElementById('progressList');
-            progressList.innerHTML = '';
-
-            names.forEach(name => {
-                const exists = artistsData.artists?.[name] || artistsData.songs?.[name];
-                const willSkip = exists && !regenerateExisting;
-                addProgressItem(name, willSkip ? 'skipped' : 'pending');
-            });
-
-            // Process batch
-            for (let i = 0; i < names.length; i++) {
-                const name = names[i];
-                const card = document.querySelector(`.artist-card[data-name="${name}"]`);
-                const type = card ? card.dataset.type : 'artist';
-                const isArtist = type === 'artist';
-
-                // Check if should skip
-                const exists = artistsData.artists?.[name] || artistsData.songs?.[name];
-                if (!regenerateExisting && exists) {
-                    updateProgressItem(name, 'skipped', 'Already has style');
-                    updateProgressBar(i + 1, names.length);
-                    continue;
-                }
-
-                updateProgressItem(name, 'processing', 'Generating...');
-
-                try {
-                    const response = await fetch(`${API_URL}/api/generate-style`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            artistName: name,
-                            password: sessionPassword,
-                            llmProvider: model,
-                            apiKey: apiKey,
-                            type: type
-                        })
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                        // Save the generated style
-                        const endpoint = isArtist ? '/api/artists' : '/api/songs';
-                        await fetch(`${API_URL}${endpoint}`, {
+                        // Generate new style
+                        const response = await fetch(`${API_URL}/api/generate-style`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                name,
-                                style: result.generatedStyle,
-                                password: sessionPassword
+                                artistName,
+                                password: sessionPassword,
+                                llmProvider,
+                                apiKey: apiKey,
+                                type: entryType
                             })
                         });
 
-                        updateProgressItem(name, 'success', 'Generated!', result.generatedStyle);
-                    } else {
-                        throw new Error(result.error || 'Failed');
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            const newStyle = data.generatedStyle;
+
+                            // Auto-save
+                            const saveEndpoint = isArtist ? '/api/artists' : '/api/songs';
+                            const saveResponse = await fetch(`${API_URL}${saveEndpoint}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    name: artistName,
+                                    style: newStyle,
+                                    password: sessionPassword
+                                })
+                            });
+
+                            if (saveResponse.ok) {
+                                successCount++;
+                                console.log(`✓ ${artistName}: regenerated`);
+                            } else {
+                                failCount++;
+                            }
+                        } else {
+                            failCount++;
+                        }
+                    } catch (error) {
+                        failCount++;
+                        console.error(`✗ ${artistName}: ${error.message}`);
                     }
-                } catch (error) {
-                    updateProgressItem(name, 'failed', error.message);
                 }
 
-                updateProgressBar(i + 1, names.length);
+                // Clear selection
+                selectedArtists.clear();
+
+                // Reload
+                await loadArtists();
+                displayArtists();
+
+                if (successCount > 0) {
+                    showAlert(`✨ ${successCount} אמנים regenerated!${failCount > 0 ? ` (${failCount} נכשלו)` : ''}`, 'success');
+                } else {
+                    showAlert(`❌ כל ${failCount} האמנים נכשלו`, 'error');
+                }
+
+            } catch (error) {
+                showAlert('שגיאה: ' + error.message, 'error');
+            } finally {
+                regenerateBtn.innerHTML = originalText;
+                regenerateBtn.disabled = selectedArtists.size === 0;
+            }
+        }
+
+        async function regenerateAll() {
+            const llmProvider = document.getElementById('llmProvider').value;
+            const apiKey = document.getElementById('apiKey').value.trim();
+
+            if (!apiKey) {
+                showAlert('דרוש API key. הזן במקטע "הגדרות AI Generator".', 'error');
+                return;
             }
 
-            // Reload artists after completion
-            await loadArtists();
+            const totalArtists = Object.keys(artistsData.artists || {}).length;
+            const totalSongs = Object.keys(artistsData.songs || {}).length;
+            const total = totalArtists + totalSongs;
 
-            // Show close button
-            document.getElementById('closeProgressBtn').style.display = 'block';
+            if (!confirm(`⚠️ WARNING: This will regenerate ALL ${total} entries (${totalArtists} artists, ${totalSongs} songs) using AI. This may take a while and cost API credits. Continue?`)) {
+                return;
+            }
+
+            showAlert(`🔥 Starting regeneration of ${total} entries...`, 'success');
+
+            let successCount = 0;
+            let failCount = 0;
+
+            try {
+                // Get all artists and songs
+                const allArtists = Object.keys(artistsData.artists || {}).map(name => ({name, type: 'artist'}));
+                const allSongs = Object.keys(artistsData.songs || {}).map(name => ({name, type: 'song'}));
+                const allEntries = [...allArtists, ...allSongs];
+
+                for (let i = 0; i < allEntries.length; i++) {
+                    const {name: artistName, type: entryType} = allEntries[i];
+                    const isArtist = entryType === 'artist';
+
+                    try {
+                        console.log(`[${i + 1}/${allEntries.length}] Regenerating: ${artistName}`);
+
+                        // Generate new style
+                        const response = await fetch(`${API_URL}/api/generate-style`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                artistName,
+                                password: sessionPassword,
+                                llmProvider,
+                                apiKey: apiKey,
+                                type: entryType
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            const newStyle = data.generatedStyle;
+
+                            // Auto-save
+                            const saveEndpoint = isArtist ? '/api/artists' : '/api/songs';
+                            const saveResponse = await fetch(`${API_URL}${saveEndpoint}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    name: artistName,
+                                    style: newStyle,
+                                    password: sessionPassword
+                                })
+                            });
+
+                            if (saveResponse.ok) {
+                                successCount++;
+                            } else {
+                                failCount++;
+                            }
+                        } else {
+                            failCount++;
+                        }
+
+                        // Update progress every 10 entries
+                        if ((i + 1) % 10 === 0) {
+                            showAlert(`Progress: ${i + 1}/${allEntries.length} (✓ ${successCount} | ✗ ${failCount})`, 'success');
+                        }
+
+                    } catch (error) {
+                        failCount++;
+                        console.error(`✗ ${artistName}: ${error.message}`);
+                    }
+                }
+
+                // Reload
+                await loadArtists();
+                displayArtists();
+
+                showAlert(`✅ Regeneration complete! ✓ ${successCount} | ✗ ${failCount}`, 'success');
+
+            } catch (error) {
+                showAlert('שגיאה: ' + error.message, 'error');
+            }
         }
 
         function openProgressModal() {
