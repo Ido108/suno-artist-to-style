@@ -498,6 +498,105 @@ app.delete('/api/artists/:name', async (req, res) => {
   }
 });
 
+// ========== SONGS API ENDPOINTS ==========
+
+// Add or update song (requires password)
+app.post('/api/songs', async (req, res) => {
+  try {
+    const { name, style, password } = req.body;
+
+    // Simple password authentication
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!name || !style) {
+      return res.status(400).json({ error: 'Name and style are required' });
+    }
+
+    const data = await readArtists();
+
+    // Initialize songs object if it doesn't exist
+    if (!data.songs) {
+      data.songs = {};
+    }
+
+    // Check for case-insensitive + diacritic-insensitive duplicates
+    const existingSongs = Object.keys(data.songs);
+    const nameNormalized = normalizeArtistName(name);
+    let actualKey = name; // The key to use (preserve original case if updating)
+
+    for (const existingName of existingSongs) {
+      if (normalizeArtistName(existingName) === nameNormalized) {
+        // Found a match (normalized comparison)
+        // Use the existing key to update it (preserve original capitalization)
+        actualKey = existingName;
+        console.log(`[Update] Updating existing song: "${existingName}" (matched "${name}")`);
+        break;
+      }
+    }
+
+    // Save with the actual key (either original or found match)
+    data.songs[actualKey] = style;
+
+    // Add timestamp metadata
+    if (!data.metadata) {
+      data.metadata = {};
+    }
+    if (!data.metadata.songs) {
+      data.metadata.songs = {};
+    }
+    data.metadata.songs[actualKey] = {
+      timestamp: Date.now(),
+      lastModified: new Date().toISOString()
+    };
+
+    const success = await writeArtists(data);
+
+    if (success) {
+      res.json({ message: 'Song added/updated successfully', name: actualKey, style });
+    } else {
+      res.status(500).json({ error: 'Failed to save song' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add/update song' });
+  }
+});
+
+// Delete song (requires password)
+app.delete('/api/songs/:name', async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    // Simple password authentication
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const songName = decodeURIComponent(req.params.name);
+    const data = await readArtists();
+
+    if (!data.songs) {
+      data.songs = {};
+    }
+
+    if (data.songs[songName]) {
+      delete data.songs[songName];
+      const success = await writeArtists(data);
+
+      if (success) {
+        res.json({ message: 'Song deleted successfully' });
+      } else {
+        res.status(500).json({ error: 'Failed to delete song' });
+      }
+    } else {
+      res.status(404).json({ error: 'Song not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete song' });
+  }
+});
+
 // Toggle enabled status
 app.post('/api/toggle', async (req, res) => {
   try {
@@ -522,56 +621,80 @@ app.post('/api/toggle', async (req, res) => {
   }
 });
 
-// Contribute endpoint - allows users to submit new artists
+// Contribute endpoint - allows users to submit new artists or songs
 app.post('/api/contribute', async (req, res) => {
   try {
-    const { artist, style } = req.body;
+    const { type, artist, song, style } = req.body;
+    const isArtist = type === 'artist';
+    const entryName = isArtist ? artist : song;
 
-    if (!artist || !style) {
-      return res.status(400).json({ error: 'Artist name and style are required' });
+    if (!entryName || !style) {
+      return res.status(400).json({ error: `${isArtist ? 'Artist' : 'Song'} name and style are required` });
     }
 
     // Read current data
     const data = await readArtists();
 
-    // Check if artist already exists (case-insensitive + diacritic-insensitive)
-    const artistNormalized = normalizeArtistName(artist);
-    const existingArtists = Object.keys(data.artists);
+    // Ensure songs object exists
+    if (!data.songs) {
+      data.songs = {};
+    }
 
-    for (const existingName of existingArtists) {
-      if (normalizeArtistName(existingName) === artistNormalized) {
-        console.log(`[Contribute] Blocked duplicate: "${artist}" (exists as "${existingName}")`);
+    // Check if entry already exists (case-insensitive + diacritic-insensitive)
+    const entryNormalized = normalizeArtistName(entryName);
+    const collection = isArtist ? data.artists : data.songs;
+    const existingEntries = Object.keys(collection);
+
+    for (const existingName of existingEntries) {
+      if (normalizeArtistName(existingName) === entryNormalized) {
+        console.log(`[Contribute] Blocked duplicate ${type}: "${entryName}" (exists as "${existingName}")`);
         return res.status(409).json({
-          error: `Artist already exists in database as "${existingName}"`
+          error: `${isArtist ? 'Artist' : 'Song'} already exists in database as "${existingName}"`
         });
       }
     }
 
-    // Add the new artist
-    data.artists[artist] = style;
+    // Add the new entry
+    if (isArtist) {
+      data.artists[entryName] = style;
+    } else {
+      data.songs[entryName] = style;
+    }
 
     // Add timestamp metadata
     if (!data.metadata) {
       data.metadata = {};
     }
-    data.metadata[artist] = {
-      timestamp: Date.now(),
-      lastModified: new Date().toISOString()
-    };
+    if (!isArtist && !data.metadata.songs) {
+      data.metadata.songs = {};
+    }
+
+    const metadataKey = isArtist ? entryName : `songs.${entryName}`;
+    if (isArtist) {
+      data.metadata[entryName] = {
+        timestamp: Date.now(),
+        lastModified: new Date().toISOString()
+      };
+    } else {
+      data.metadata.songs[entryName] = {
+        timestamp: Date.now(),
+        lastModified: new Date().toISOString()
+      };
+    }
 
     // Save to file
     const success = await writeArtists(data);
 
     if (success) {
-      console.log(`[Contribute] New artist added: ${artist}`);
+      console.log(`[Contribute] New ${type} added: ${entryName}`);
       res.json({
         success: true,
         message: 'Thank you for contributing!',
-        artist,
+        name: entryName,
         style
       });
     } else {
-      res.status(500).json({ error: 'Failed to save artist' });
+      res.status(500).json({ error: `Failed to save ${type}` });
     }
 
   } catch (error) {

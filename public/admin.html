@@ -568,6 +568,10 @@
                 <div class="stat-label">סה״כ אמנים</div>
             </div>
             <div class="stat-card">
+                <div class="stat-number" id="totalSongs">0</div>
+                <div class="stat-label">סה״כ שירים</div>
+            </div>
+            <div class="stat-card">
                 <div class="stat-number" id="enabledStatus">-</div>
                 <div class="stat-label">סטטוס</div>
             </div>
@@ -639,7 +643,21 @@
             </div>
 
             <div class="form-group">
-                <label for="artistName">שם האמן:</label>
+                <label style="display: block; margin-bottom: 8px;">סוג:</label>
+                <div style="display: flex; gap: 16px; margin-bottom: 12px;">
+                    <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                        <input type="radio" name="entry-type" value="artist" checked onchange="updateEntryTypeUI()" style="margin-left: 6px; width: auto;">
+                        <span>🎤 אמן</span>
+                    </label>
+                    <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                        <input type="radio" name="entry-type" value="song" onchange="updateEntryTypeUI()" style="margin-left: 6px; width: auto;">
+                        <span>🎵 שיר</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="artistName" id="nameLabel">שם האמן:</label>
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <input type="text" id="artistName" placeholder="לדוגמה: Billy Joel" style="flex: 1;">
                     <button class="btn btn-ai" onclick="generateStyle()" id="generateBtn" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; white-space: nowrap;">
@@ -648,7 +666,7 @@
                 </div>
                 <div class="form-check" style="margin-top: 8px;">
                     <input type="checkbox" id="regenerateExisting" checked>
-                    <label for="regenerateExisting" style="font-weight: 400; font-size: 0.9em; color: #6c757d;">
+                    <label for="regenerateExisting" id="regenerateLabel" style="font-weight: 400; font-size: 0.9em; color: #6c757d;">
                         🔄 Regenerate existing artists? (אם לא מסומן, ידלג על אמנים קיימים)
                     </label>
                 </div>
@@ -660,7 +678,7 @@
             </div>
 
             <div>
-                <button class="btn btn-primary" onclick="saveArtist()">💾 שמור/עדכן אמן</button>
+                <button class="btn btn-primary" onclick="saveEntry()" id="saveBtn">💾 שמור/עדכן אמן</button>
                 <button class="btn btn-success" onclick="loadArtists()">🔄 רענן רשימה</button>
             </div>
 
@@ -986,8 +1004,22 @@
         }
 
         function updateStats() {
-            document.getElementById('totalArtists').textContent = Object.keys(artistsData.artists).length;
+            document.getElementById('totalArtists').textContent = Object.keys(artistsData.artists || {}).length;
+            document.getElementById('totalSongs').textContent = Object.keys(artistsData.songs || {}).length;
             document.getElementById('enabledStatus').textContent = artistsData.enabled ? '✅ פעיל' : '❌ כבוי';
+        }
+
+        // Update UI when entry type changes
+        function updateEntryTypeUI() {
+            const entryType = document.querySelector('input[name="entry-type"]:checked').value;
+            const isArtist = entryType === 'artist';
+
+            document.getElementById('nameLabel').textContent = isArtist ? 'שם האמן:' : 'שם השיר:';
+            document.getElementById('artistName').placeholder = isArtist ? 'לדוגמה: Billy Joel' : 'לדוגמה: Bohemian Rhapsody';
+            document.getElementById('regenerateLabel').textContent = isArtist
+                ? '🔄 Regenerate existing artists? (אם לא מסומן, ידלג על אמנים קיימים)'
+                : '🔄 Regenerate existing songs? (אם לא מסומן, ידלג על שירים קיימים)';
+            document.getElementById('saveBtn').textContent = isArtist ? '💾 שמור/עדכן אמן' : '💾 שמור/עדכן שיר';
         }
 
         function updateToggle() {
@@ -1001,52 +1033,54 @@
         function displayArtists(highlightArtist = null) {
             const artistsList = document.getElementById('artistsList');
 
-            // Get artists with timestamps if available
-            let artists = Object.entries(artistsData.artists || {});
+            // Get both artists and songs
+            let artists = Object.entries(artistsData.artists || {}).map(([name, style]) => ({name, style, type: 'artist'}));
+            let songs = Object.entries(artistsData.songs || {}).map(([name, style]) => ({name, style, type: 'song'}));
+            let allEntries = [...artists, ...songs];
 
-            if (artists.length === 0) {
-                artistsList.innerHTML = '<p style="text-align: center; color: #6c757d;">אין אמנים במאגר</p>';
+            if (allEntries.length === 0) {
+                artistsList.innerHTML = '<p style="text-align: center; color: #6c757d;">אין אמנים או שירים במאגר</p>';
                 return;
             }
 
-            // Add timestamps from metadata if available
-            const artistsWithMeta = artists.map(([name, styleOrObj]) => {
-                // Support both string styles and object with {style, timestamp}
-                if (typeof styleOrObj === 'object' && styleOrObj.style) {
-                    return [name, styleOrObj.style, styleOrObj.timestamp || 0];
-                } else {
-                    return [name, styleOrObj, artistsData.metadata?.[name]?.timestamp || 0];
-                }
+            // Add timestamps from metadata
+            const entriesWithMeta = allEntries.map(entry => {
+                const timestamp = entry.type === 'artist'
+                    ? artistsData.metadata?.[entry.name]?.timestamp || 0
+                    : artistsData.metadata?.songs?.[entry.name]?.timestamp || 0;
+                return [entry.name, entry.style, timestamp, entry.type];
             });
 
             // Sort based on current sort mode
             if (currentSort === 'name') {
-                artistsWithMeta.sort((a, b) => a[0].localeCompare(b[0]));
+                entriesWithMeta.sort((a, b) => a[0].localeCompare(b[0]));
             } else if (currentSort === 'recent') {
-                artistsWithMeta.sort((a, b) => b[2] - a[2]); // Newest first
+                entriesWithMeta.sort((a, b) => b[2] - a[2]); // Newest first
             }
 
             // Build genre list
-            updateGenreFilter(artistsWithMeta);
+            updateGenreFilter(entriesWithMeta);
 
-            artistsList.innerHTML = artistsWithMeta.map(([name, style, timestamp], index) => {
+            artistsList.innerHTML = entriesWithMeta.map(([name, style, timestamp, type], index) => {
                 const isSelected = selectedArtists.has(name);
                 const isHighlighted = highlightArtist === name;
+                const typeIcon = type === 'song' ? '🎵' : '🎤';
+                const typeLabel = type === 'song' ? 'שיר' : 'אמן';
                 return `
-                <div class="artist-card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}" data-name="${name}" data-index="${index}" data-genre="${getGenreFromStyle(style)}">
+                <div class="artist-card ${isSelected ? 'selected' : ''} ${isHighlighted ? 'highlighted' : ''}" data-name="${name}" data-index="${index}" data-genre="${getGenreFromStyle(style)}" data-type="${type}">
                     <input type="checkbox" class="artist-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleArtistSelection('${escapeHtml(name)}', event)" onclick="handleCheckboxClick(event, ${index})">
                     <div class="artist-info" onclick="toggleArtistDetails('${escapeHtml(name)}')">
-                        <div class="artist-name">${name}</div>
+                        <div class="artist-name">${typeIcon} ${name}</div>
                         <div class="artist-style" title="${escapeHtml(style)}">${style}</div>
                         <div class="artist-details" id="details-${escapeHtml(name)}" style="display: none;">
-                            <textarea class="edit-textarea" id="edit-${escapeHtml(name)}" style="width: 100%; margin-top: 10px; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; font-size: 0.9em;">${escapeHtml(style)}</textarea>
-                            <button class="btn btn-primary" onclick="saveInlineEdit('${escapeHtml(name)}'); event.stopPropagation();" style="margin-top: 8px; padding: 4px 12px; font-size: 0.85em;">💾 שמור</button>
+                            <textarea class="edit-textarea" id="edit-${escapeHtml(name)}" data-type="${type}" style="width: 100%; margin-top: 10px; padding: 8px; border-radius: 4px; border: 1px solid #dee2e6; font-size: 0.9em;">${escapeHtml(style)}</textarea>
+                            <button class="btn btn-primary" onclick="saveInlineEdit('${escapeHtml(name)}', '${type}'); event.stopPropagation();" style="margin-top: 8px; padding: 4px 12px; font-size: 0.85em;">💾 שמור</button>
                         </div>
                     </div>
                     <div class="artist-actions">
-                        <button class="btn btn-primary" onclick="editArtist('${escapeHtml(name)}', '${escapeHtml(style)}')">✏️</button>
-                        <button class="btn btn-success" onclick="regenerateArtist('${escapeHtml(name)}')">🔄</button>
-                        <button class="btn btn-danger" onclick="deleteArtist('${escapeHtml(name)}')">🗑️</button>
+                        <button class="btn btn-primary" onclick="editEntry('${escapeHtml(name)}', '${escapeHtml(style)}', '${type}')">✏️</button>
+                        <button class="btn btn-success" onclick="regenerateEntry('${escapeHtml(name)}', '${type}')">🔄</button>
+                        <button class="btn btn-danger" onclick="deleteEntry('${escapeHtml(name)}', '${type}')">🗑️</button>
                     </div>
                 </div>
             `}).join('');
@@ -1268,17 +1302,20 @@
             updateDisplayIndicator();
         }
 
-        async function saveArtist() {
+        async function saveEntry() {
             const name = document.getElementById('artistName').value.trim();
             const style = document.getElementById('artistStyle').value.trim();
+            const entryType = document.querySelector('input[name="entry-type"]:checked').value;
+            const isArtist = entryType === 'artist';
 
             if (!name || !style) {
-                showAlert('נא למלא את שם האמן והסטייל', 'error');
+                showAlert(`נא למלא את שם ה${isArtist ? 'אמן' : 'שיר'} והסטייל`, 'error');
                 return;
             }
 
             try {
-                const response = await fetch(`${API_URL}/api/artists`, {
+                const endpoint = isArtist ? '/api/artists' : '/api/songs';
+                const response = await fetch(`${API_URL}${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, style, password: sessionPassword })
@@ -1287,22 +1324,22 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showAlert('האמן נשמר בהצלחה!', 'success');
+                    showAlert(`ה${isArtist ? 'אמן' : 'שיר'} נשמר בהצלחה!`, 'success');
 
-                    // Store the artist name to keep in focus
-                    const savedArtistName = name;
+                    // Store the name to keep in focus
+                    const savedName = name;
 
                     document.getElementById('artistName').value = '';
                     document.getElementById('artistStyle').value = '';
 
-                    // Reload and highlight the saved artist, keeping search filter
+                    // Reload and highlight the saved entry, keeping search filter
                     await loadArtists();
 
-                    // Set search to the saved artist name to keep it in focus
-                    document.getElementById('searchInput').value = savedArtistName;
-                    currentSearchTerm = savedArtistName.toLowerCase();
+                    // Set search to the saved name to keep it in focus
+                    document.getElementById('searchInput').value = savedName;
+                    currentSearchTerm = savedName.toLowerCase();
 
-                    displayArtists(savedArtistName);
+                    displayArtists(savedName);
                 } else {
                     showAlert(data.error || 'שגיאה בשמירה', 'error');
                 }
@@ -1321,7 +1358,7 @@
         }
 
         // Save inline edit
-        async function saveInlineEdit(name) {
+        async function saveInlineEdit(name, type) {
             const textarea = document.getElementById(`edit-${name}`);
             const newStyle = textarea.value.trim();
 
@@ -1330,8 +1367,11 @@
                 return;
             }
 
+            const isArtist = type === 'artist';
+            const endpoint = isArtist ? '/api/artists' : '/api/songs';
+
             try {
-                const response = await fetch(`${API_URL}/api/artists`, {
+                const response = await fetch(`${API_URL}${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, style: newStyle, password: sessionPassword })
@@ -1340,12 +1380,12 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showAlert('האמן עודכן בהצלחה!', 'success');
+                    showAlert(`ה${isArtist ? 'אמן' : 'שיר'} עודכן בהצלחה!`, 'success');
 
-                    // Reload and keep the artist in view with search filter
+                    // Reload and keep the entry in view with search filter
                     await loadArtists();
 
-                    // Keep search focused on this artist
+                    // Keep search focused on this entry
                     document.getElementById('searchInput').value = name;
                     currentSearchTerm = name.toLowerCase();
 
@@ -1358,13 +1398,18 @@
             }
         }
 
-        async function deleteArtist(name) {
-            if (!confirm(`האם אתה בטוח שברצונך למחוק את ${name}?`)) {
+        async function deleteEntry(name, type) {
+            const isArtist = type === 'artist';
+            const typeLabel = isArtist ? 'אמן' : 'שיר';
+
+            if (!confirm(`האם אתה בטוח שברצונך למחוק את ה${typeLabel} ${name}?`)) {
                 return;
             }
 
+            const endpoint = isArtist ? '/api/artists' : '/api/songs';
+
             try {
-                const response = await fetch(`${API_URL}/api/artists/${encodeURIComponent(name)}`, {
+                const response = await fetch(`${API_URL}${endpoint}/${encodeURIComponent(name)}`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password: sessionPassword })
@@ -1373,7 +1418,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    showAlert('האמן נמחק בהצלחה', 'success');
+                    showAlert(`ה${typeLabel} נמחק בהצלחה`, 'success');
                     loadArtists();
                 } else {
                     showAlert(data.error || 'שגיאה במחיקה', 'error');
@@ -1383,13 +1428,21 @@
             }
         }
 
-        function editArtist(name, style) {
+        function editEntry(name, style, type) {
             document.getElementById('artistName').value = name;
             document.getElementById('artistStyle').value = style;
+
+            // Set the correct radio button
+            const radioButton = document.querySelector(`input[name="entry-type"][value="${type}"]`);
+            if (radioButton) {
+                radioButton.checked = true;
+                updateEntryTypeUI();
+            }
+
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        async function regenerateArtist(name) {
+        async function regenerateEntry(name, type) {
             const llmProvider = document.getElementById('llmProvider').value;
             const apiKey = document.getElementById('apiKey').value.trim();
 
@@ -1414,6 +1467,9 @@
                 styleDiv.innerHTML = '<span style="color: #667eea;">⏳ Generating...</span>';
             }
 
+            const isArtist = type === 'artist';
+            const endpoint = isArtist ? '/api/artists' : '/api/songs';
+
             try {
                 const response = await fetch(`${API_URL}/api/generate-style`, {
                     method: 'POST',
@@ -1432,7 +1488,7 @@
                     const newStyle = data.generatedStyle;
 
                     // Auto-save the new style
-                    const saveResponse = await fetch(`${API_URL}/api/artists`, {
+                    const saveResponse = await fetch(`${API_URL}${endpoint}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -1706,6 +1762,10 @@
                 console.log(`⚙️ Regenerate existing: ${regenerateExisting ? 'YES' : 'NO'}`);
 
                 // PHASE 2: Pre-check all artists and categorize
+                const entryType = document.querySelector('input[name="entry-type"]:checked').value;
+                const isArtist = entryType === 'artist';
+                const collection = isArtist ? (currentArtistsData.artists || {}) : (currentArtistsData.songs || {});
+
                 let existingArtists = [];
                 let newArtists = [];
                 let willSkip = 0;
@@ -1713,7 +1773,7 @@
                 for (const artistName of artistNames) {
                     // Case-insensitive + diacritic-insensitive check
                     const nameNormalized = normalizeArtistName(artistName);
-                    const artistExists = Object.keys(currentArtistsData.artists || {}).find(
+                    const artistExists = Object.keys(collection).find(
                         key => normalizeArtistName(key) === nameNormalized
                     );
 
@@ -1745,9 +1805,9 @@
 
                 for (const artistName of artistNames) {
                     try {
-                        // Check if artist already exists (case-insensitive + diacritic-insensitive)
+                        // Check if entry already exists (case-insensitive + diacritic-insensitive)
                         const nameNormalized = normalizeArtistName(artistName);
-                        const artistExists = Object.keys(currentArtistsData.artists || {}).find(
+                        const artistExists = Object.keys(collection).find(
                             key => normalizeArtistName(key) === nameNormalized
                         );
 
@@ -1755,7 +1815,7 @@
                         if (artistExists && !regenerateExisting) {
                             skippedCount++;
                             processedCount++;
-                            const existingStyle = currentArtistsData.artists[artistExists];
+                            const existingStyle = collection[artistExists];
                             updateProgressItem(artistName, 'skipped', 'Already exists', existingStyle);
                             updateProgressBar(processedCount, artistNames.length);
                             console.log(`⏭️ "${artistName}": SKIPPED`);
@@ -1782,8 +1842,9 @@
                         if (response.ok) {
                             const generatedStyle = data.generatedStyle;
 
-                            // Auto-save this artist
-                            const saveResponse = await fetch(`${API_URL}/api/artists`, {
+                            // Auto-save this entry
+                            const saveEndpoint = isArtist ? '/api/artists' : '/api/songs';
+                            const saveResponse = await fetch(`${API_URL}${saveEndpoint}`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
