@@ -548,21 +548,35 @@
         /* PROMPT EDITOR MODAL - MUCH LARGER */
         #promptEditorModal .progress-panel,
         #jsonEditorModal .progress-panel {
-            max-width: 90%;
-            max-height: 85vh;
+            max-width: 95% !important;
+            width: 95% !important;
+            max-height: 90vh !important;
+            height: 90vh !important;
         }
 
         #promptEditorModal .progress-panel textarea,
         #jsonEditorModal .progress-panel textarea {
             flex: 1;
+            min-height: 70vh;
             font-family: 'Courier New', monospace;
-            font-size: 13px;
-            padding: 15px;
+            font-size: 14px;
+            line-height: 1.6;
+            padding: 20px;
             border: 2px solid #dee2e6;
             border-radius: 8px;
             resize: none;
             background: #f8f9fa;
             color: #2d3748;
+        }
+
+        #promptEditorModal .progress-header,
+        #jsonEditorModal .progress-header {
+            flex-shrink: 0;
+        }
+
+        #promptEditorModal .progress-footer,
+        #jsonEditorModal .progress-footer {
+            flex-shrink: 0;
         }
 
         .progress-header {
