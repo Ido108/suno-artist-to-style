@@ -1681,10 +1681,13 @@
             const style = document.getElementById('artistStyle').value.trim();
             const type = document.querySelector('input[name="entry-type"]:checked').value;
 
-            if (!name) {
-                showAlert('שם חובה!', 'error');
+            if (!name || !style) {
+                showAlert('נא למלא את כל השדות!', 'error');
                 return;
             }
+
+            const isArtist = type === 'artist';
+            const endpoint = isArtist ? '/api/artists' : '/api/songs';
 
             const saveBtn = document.getElementById('saveBtn');
             const originalText = saveBtn.textContent;
@@ -1692,13 +1695,12 @@
             saveBtn.textContent = '⏳ שומר...';
 
             try {
-                const response = await fetch(`${API_URL}/api/artists`, {
+                const response = await fetch(`${API_URL}${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         name,
                         style,
-                        type,
                         password: sessionPassword
                     })
                 });
@@ -1730,11 +1732,14 @@
                 return;
             }
 
+            const isArtist = type === 'artist';
+            const endpoint = isArtist ? '/api/artists' : '/api/songs';
+
             try {
-                const response = await fetch(`${API_URL}/api/artists`, {
+                const response = await fetch(`${API_URL}${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, style: newStyle, type, password: sessionPassword })
+                    body: JSON.stringify({ name, style: newStyle, password: sessionPassword })
                 });
 
                 const data = await response.json();
@@ -1765,8 +1770,11 @@
                 return;
             }
 
+            const isArtist = type === 'artist';
+            const endpoint = isArtist ? '/api/artists' : '/api/songs';
+
             try {
-                const response = await fetch(`${API_URL}/api/artists/${encodeURIComponent(name)}`, {
+                const response = await fetch(`${API_URL}${endpoint}/${encodeURIComponent(name)}`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password: sessionPassword })
@@ -1837,7 +1845,7 @@
                     body: JSON.stringify({
                         artistName: name,
                         password: sessionPassword,
-                        llmProvider,
+                        llmProvider: model,
                         apiKey: apiKey,
                         type: type
                     })
@@ -1922,7 +1930,7 @@
                     body: JSON.stringify({
                         artistName: name,
                         password: sessionPassword,
-                        llmProvider,
+                        llmProvider: model,
                         apiKey: apiKey,
                         type: type
                     })
@@ -1992,8 +2000,8 @@
             let skipCount = 0;
 
             names.forEach(name => {
-                const artist = artistsData.artists[name];
-                if (artist?.style) {
+                const exists = artistsData.artists?.[name] || artistsData.songs?.[name];
+                if (exists) {
                     existingCount++;
                     if (!regenerateExisting) skipCount++;
                 } else {
@@ -2012,19 +2020,21 @@
             progressList.innerHTML = '';
 
             names.forEach(name => {
-                const artist = artistsData.artists[name];
-                const willSkip = artist?.style && !regenerateExisting;
+                const exists = artistsData.artists?.[name] || artistsData.songs?.[name];
+                const willSkip = exists && !regenerateExisting;
                 addProgressItem(name, willSkip ? 'skipped' : 'pending');
             });
 
             // Process batch
             for (let i = 0; i < names.length; i++) {
                 const name = names[i];
-                const artist = artistsData.artists[name];
-                const type = artist?.type || 'artist';
+                const card = document.querySelector(`.artist-card[data-name="${name}"]`);
+                const type = card ? card.dataset.type : 'artist';
+                const isArtist = type === 'artist';
 
                 // Check if should skip
-                if (!regenerateExisting && artist?.style) {
+                const exists = artistsData.artists?.[name] || artistsData.songs?.[name];
+                if (!regenerateExisting && exists) {
                     updateProgressItem(name, 'skipped', 'Already has style');
                     updateProgressBar(i + 1, names.length);
                     continue;
@@ -2033,19 +2043,15 @@
                 updateProgressItem(name, 'processing', 'Generating...');
 
                 try {
-                    const card = document.querySelector(`.artist-card[data-name="${name}"]`);
-                    const entryType = card ? card.dataset.type : 'artist';
-                    const isArtist = entryType === 'artist';
-
                     const response = await fetch(`${API_URL}/api/generate-style`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             artistName: name,
                             password: sessionPassword,
-                            llmProvider,
+                            llmProvider: model,
                             apiKey: apiKey,
-                            type: entryType
+                            type: type
                         })
                     });
 
