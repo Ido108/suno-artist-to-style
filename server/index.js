@@ -818,91 +818,16 @@ app.post('/api/generate-style', async (req, res) => {
 
     console.log(`[Generate-Style] Processing request for ${isArtist ? 'artist' : 'song'} "${artistName}" using ${llmProvider}`);
 
-    // Get the appropriate prompt based on type
-    let systemPrompt;
+    // Read prompt from file
+    let promptTemplate = await readPrompt(isArtist ? 'artist' : 'song');
 
-    if (isArtist) {
-      systemPrompt = `You are an expert music analyst and Suno AI style descriptor. Your job is to analyze artists and create detailed, accurate style descriptions for music generation.
-
-CRITICAL INSTRUCTIONS:
-1. Create a comma-separated description that captures the EXACT musical characteristics
-2. Focus on: Genre, Sub-genre, Tempo feel, Instrumentation, Vocal style, Mood, Production style
-3. Be SPECIFIC and DETAILED - avoid generic terms
-4. Include technical music terms when relevant
-5. Keep it concise but comprehensive (aim for 8-15 descriptive elements)
-6. Do NOT include the artist name in the output
-7. Do NOT use phrases like "in the style of" or "similar to"
-8. Output ONLY the comma-separated style description, no quotes, no explanations
-9. This can be used for a single artist or as part of processing multiple artists in a prompt
-
-FORMAT RULES:
-- Comma-separated list
-- Start with main genre(s)
-- Include specific instruments
-- Describe vocal characteristics (if applicable)
-- Add mood/feeling descriptors
-- Include tempo indicators (e.g., upbeat, slow, moderate)
-- Mention production style (e.g., polished, raw, lo-fi, orchestral)
-
-EXAMPLES OF GOOD OUTPUT:
-Pop Rock, Piano-driven, Storytelling lyrics, Upbeat, Male vocals, 80s production, Melodic, Catchy hooks, Anthemic choruses
-Soul, Emotional, Torch-Lounge, Powerful female vocals, Gospel influences, R&B elements, Melancholic, Piano and strings
-Alternative Rock, Grunge, Dark, Melodic, Heavy guitar riffs, Baritone male vocals, 90s Seattle sound, Introspective
-EDM, Melodic, Euphoric, Build-ups and drops, Synth-heavy, Festival anthems, Emotional vocal samples, Progressive house
-
-EXAMPLES OF BAD OUTPUT:
-Like Billy Joel ❌
-Similar to Adele's style ❌
-Pop music ❌ (too vague)
-Great artist with amazing voice ❌ (not descriptive)
-
-MAKE SURE IT PERFECTLY REPRESENT THE PROVIDED ARTIST/BAND/COMPOSER WITH NO IRRELEVANT INFO THAT IS NOT PERFECTLY MATCHES THE SPECIFIC DETAILED STYLE.
-
-Artist: ${artistName}
-
-Generate ONLY the detailed, comma-separated style description:`;
-    } else {
-      // Song-specific prompt
-      systemPrompt = `You are an expert music analyst and Suno AI style descriptor. Your job is to analyze SPECIFIC SONGS and create detailed, accurate style descriptions for music generation.
-
-CRITICAL INSTRUCTIONS:
-1. Create a comma-separated description that captures the EXACT characteristics of THIS SPECIFIC SONG
-2. Focus on: Genre, Sub-genre, Song structure, Key musical elements, Vocal delivery, Mood, Specific instrumentation, Production style
-3. Be SPECIFIC and DETAILED - describe what makes THIS SONG unique
-4. Include technical music terms when relevant
-5. Keep it concise but comprehensive (aim for 10-20 descriptive elements)
-6. Do NOT include the song name or artist name in the output
-7. Do NOT use phrases like "in the style of" or "similar to"
-8. Output ONLY the comma-separated style description, no quotes, no explanations
-9. Focus on the SPECIFIC characteristics of this particular song, not the artist's general style
-
-FORMAT RULES:
-- Comma-separated list
-- Start with main genre(s)
-- Include specific instruments and sounds used in THIS song
-- Describe vocal characteristics and delivery in THIS song
-- Add mood/feeling descriptors specific to THIS song
-- Include tempo and rhythm patterns
-- Mention production style and sonic qualities
-- Highlight unique elements that define THIS song
-
-EXAMPLES OF GOOD OUTPUT (for specific songs):
-Rock opera, Multi-section structure, Piano ballad intro, Guitar-driven middle section, Operatic vocals, Harmonized backing vocals, Dramatic dynamics, Tempo changes, British rock, Theatrical, Epic, Six-minute composition
-Grunge, Dark, Heavy distorted guitars, Drop-D tuning, Quiet verse loud chorus dynamic, Apathetic vocal delivery, Nihilistic mood, Slow tempo, Raw production, Iconic opening riff
-Ballad, Piano-driven, Powerful emotional female vocals, Gospel-influenced, Slow to moderate tempo, Orchestral strings, Dynamic build-up, Melancholic to triumphant, Modern production, Vocal runs, Heartbreak theme
-
-EXAMPLES OF BAD OUTPUT:
-Like Queen ❌
-Bohemian Rhapsody style ❌
-Rock ❌ (too vague)
-Great song ❌ (not descriptive)
-
-MAKE SURE IT PERFECTLY REPRESENTS THIS SPECIFIC SONG'S UNIQUE CHARACTERISTICS, NOT THE ARTIST'S GENERAL STYLE.
-
-Song: ${artistName}
-
-Generate ONLY the detailed, comma-separated style description for this specific song:`;
+    if (!promptTemplate) {
+      return res.status(500).json({ error: 'Prompt file not found' });
     }
+
+    // Replace placeholder with actual name
+    const placeholder = isArtist ? '{ARTIST_NAME}' : '{SONG_NAME}';
+    const systemPrompt = promptTemplate.replace(placeholder, artistName);
 
     let generatedStyle = '';
 
