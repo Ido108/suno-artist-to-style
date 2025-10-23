@@ -15,15 +15,14 @@ body {
 
 /* Animated Gradient Background */
 .gradient-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    background: linear-gradient(135deg, #000000 0%, #1a0033 25%, #000033 50%, #001a33 75%, #000000 100%);
-    background-size: 400% 400%;
-    animation: gradientShift 20s ease infinite;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1000px;
+    height: 1000px;
+    background: radial-gradient(circle, rgba(138, 92, 246, 0.15) 0%, rgba(138, 92, 246, 0) 60%);
+    animation: pulse 15s infinite ease-in-out;
+    transform: translate(-50%, -50%);
 }
 
 @keyframes gradientShift {
@@ -205,20 +204,21 @@ header.scrolled {
 
 /* Hero Section */
 .hero {
-    padding-top: 140px;
+    padding-top: 20px;
     padding-bottom: 80px;
-    max-width: 1600px;
+    max-width: 1400px;
     margin: 0 auto;
-    padding-left: 40px;
-    padding-right: 40px;
+    padding-left: 80px;
+    padding-right: 80px;
     position: relative;
 }
 
 .hero-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 60px;
+    gap: 100px;
     align-items: center;
+    padding-top: 0;
 }
 
 .hero-content h1 {
@@ -905,4 +905,115 @@ footer {
     .section-header-compact h2 {
         font-size: 2em;
     }
+}
+
+/* Top Logo */
+.top-logo {
+    text-align: center;
+    padding: 40px 20px 10px 20px;
+}
+
+.top-logo img {
+    width: 100px;
+    height: 100px;
+}
+
+/* Prompt Box Animation Styles (from example) */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    color: #8A5CF6;
+}
+
+.hero-content h1 .highlight {
+    background: linear-gradient(90deg, #8A5CF6, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.prompt-box {
+    width: 100%;
+    max-width: 500px;
+    background: #18161D;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.prompt-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #A0A0A0;
+    margin-bottom: 0;
+}
+
+.prompt-input-container {
+    background: #0D0C0F;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    font-size: 1.05rem;
+    color: #EAEAEA;
+    min-height: 80px;
+    line-height: 1.6;
+}
+
+.cursor {
+    display: none;
+}
+
+.create-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(90deg, #FF8A00, #E52E71);
+    border: none;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.create-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(255, 100, 100, 0.25);
+}
+
+.create-btn:active {
+    transform: translateY(0);
+}
+
+.create-btn svg {
+    color: white;
+}
+
+.hero-arrow {
+    position: absolute;
+    bottom: -80px;
+    right: -20px;
+    width: 120px;
+    z-index: 1;
+    opacity: 0.7;
+    transform: rotate(5deg);
 }

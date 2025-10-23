@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SunoMate - AI Artist & Song Style Generator for Suno</title>
     <meta name="description" content="Automatically replace artist names with detailed style descriptions in Suno. 2500+ pre-loaded database, works with any language.">
-    <link rel="icon" type="image/png" href="https://storage.googleapis.com/eighth-block-311611.appspot.com/Sunomate-icon.png">
-    <link rel="apple-touch-icon" href="https://storage.googleapis.com/eighth-block-311611.appspot.com/Sunomate-icon.png">
+    <link rel="icon" type="image/png" href="https://storage.googleapis.com/eighth-block-311611.appspot.com/sunomate-icon-red.png">
+    <link rel="apple-touch-icon" href="https://storage.googleapis.com/eighth-block-311611.appspot.com/sunomate-icon-red.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/TextPlugin.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -22,31 +23,19 @@
     <div class="gradient-orb orb-3"></div>
 
     <!-- Header -->
-    <header id="header">
-        <div class="header-content">
-            <div class="logo-header">
-                <img src="https://storage.googleapis.com/eighth-block-311611.appspot.com/Sunomate-icon.png" alt="SunoMate">
-                <span>SunoMate</span>
-            </div>
-            <div class="header-cta">
-                <a href="https://chromewebstore.google.com/detail/sunomate/idolkfahegceeekjombgapbmmgopfnff" class="btn-header btn-chrome-header" target="_blank" rel="noopener">
-                    <img src="https://storage.googleapis.com/eighth-block-311611.appspot.com/chrome-Logo.png" alt="Chrome">
-                    Chrome
-                </a>
-                <a href="https://addons.mozilla.org/en-US/firefox/addon/sunomate/" class="btn-header btn-firefox-header" target="_blank" rel="noopener">
-                    <img src="https://storage.googleapis.com/eighth-block-311611.appspot.com/firefox-Logo.png" alt="Firefox">
-                    Firefox
-                </a>
-            </div>
-        </div>
-    </header>
+    <!-- Top Logo -->
+    <div class="top-logo">
+        <img src="https://storage.googleapis.com/eighth-block-311611.appspot.com/sunomate-icon-red.png" alt="SunoMate">
+    </div>
 
     <!-- Hero -->
     <section class="hero">
         <div class="hero-grid">
             <div class="hero-content">
-                <h1>Transform artist & song names into perfect Suno prompts</h1>
-                <p class="subtitle">Type any artist or song name in Suno's style field. SunoMate instantly converts it to a detailed musical style description. 2500+ artists & songs pre-loaded.</p>
+                <div class="badge">✨ As featured on Suno</div>
+                <h2>Stop Guessing Prompts.</h2>
+                <h1>Get the Perfect <span class="highlight">Sound</span>, Instantly.</h1>
+                <p class="subtitle">SunoMate transforms any artist or song name into a detailed, high-quality style prompt, right inside Suno. Create better music, faster.</p>
                 <div class="cta-buttons">
                     <a href="https://chromewebstore.google.com/detail/sunomate/idolkfahegceeekjombgapbmmgopfnff" class="btn-primary" target="_blank" rel="noopener">
                         <img src="https://storage.googleapis.com/eighth-block-311611.appspot.com/chrome-Logo.png" alt="Chrome">
@@ -59,7 +48,20 @@
                 </div>
             </div>
             <div class="hero-visual">
-                <img src="https://storage.googleapis.com/eighth-block-311611.appspot.com/Sunomate-Main.gif" alt="SunoMate Demo">
+                <div class="prompt-box">
+                    <span class="prompt-label">Style of Music</span>
+                    <div class="prompt-input-container">
+                        <span id="prompt-text"></span><span class="cursor">|</span>
+                    </div>
+                    <button class="create-btn" id="create-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13.507 2.05399C13.8828 1.20199 15.1172 1.20199 15.493 2.05399L16.207 3.68999C16.3574 4.03259 16.6421 4.31728 16.9847 4.46768L18.621 5.18199C19.473 5.55799 19.849 6.79199 19.097 7.54399L17.811 8.82999C17.5584 9.08257 17.4416 9.44198 17.507 9.79299L17.879 11.758C18.117 12.784 17.069 13.58 16.121 13.253L14.285 12.624C13.9571 12.5113 13.5839 12.5113 13.256 12.624L11.42 13.253C10.472 13.58 9.424 12.784 9.662 11.758L10.034 9.79299C10.0994 9.44198 9.98257 9.08257 9.73 8.82999L8.443 7.54399C7.691 6.79199 8.067 5.55799 8.919 5.18199L10.555 4.46768C10.8976 4.31728 11.1823 4.03259 11.3327 3.68999L12.047 2.05399C12.2154 1.67816 12.5695 1.42857 12.984 1.42857C13.0139 1.42857 13.0438 1.43045 13.0735 1.4342L13.507 2.05399Z" fill="currentColor"/>
+                            <path d="M12 13.5C10.2222 13.5 8.65556 13.125 7.3 12.375C5.94444 11.625 4.86111 10.6312 4.05 9.39375C3.23889 8.15625 2.83333 6.7875 2.83333 5.2875V21H21.1667V13.5H12Z" fill="currentColor"/>
+                        </svg>
+                        Create
+                    </button>
+                </div>
+                <img class="hero-arrow" src="https://storage.googleapis.com/eighth-block-311611.appspot.com/hero-arrow.svg" alt="Arrow pointing to the prompt box">
             </div>
         </div>
     </section>
