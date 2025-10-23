@@ -20,18 +20,23 @@ FORMAT RULES:
 - Mention production style (e.g., polished, raw, lo-fi, orchestral)
 - DO NOT INCLUDE ANY sub-element that not PERFECTLY matched the majority of this artist repertiore
 - NEVER USE general description, "rock" can mean 1000 different sub-genres that not matching the same for different artist, be PERCISE.
+- Maximum output length: 8-12 comma-separated elements
 
-EXAMPLES OF GOOD settings for outputs (just inspirational, USE correct settings):
+EXAMPLES OF INDIVIDUAL DESCRIPTORS (just inspirational examples of possible descriptors - NOT a fixed list to pick from, and NOT complete output examples):
 Piano-driven pop, Joyful Gospel with choir vocals, clapping, and uplifting organ melody, Male vocals, 80s production, Melodic, Catchy hooks, Anthemic choruses
 Soul, Emotional, [specific setting] artist, dou, Torch-Lounge, Powerful female vocals, Gospel influences, Choir background vocals, Melancholic, Piano and strings
 Alternative Rock, Boy band, k-pop, [specific setting] band, Grunge, Dark, Melodic, Heavy guitar riffs, Baritone male vocals, 90s Seattle sound, Introspective
 EDM, Melodic, Euphoric, Build-ups and drops, Synth-heavy, Festival anthems, Emotional vocal samples, Progressive house
 happy choir, energetic soul, gospel, jazz, Christian choir, worship, rhythmical, blues, motown piano, funk pop, brass energetic section, eurodance 80's, disco soul, epic disco, funk, energetic trombones, strings stabs, energetic strings, syncopated piano, brass hits
+
+NOTE: These are just EXAMPLE descriptors showing the style of language to use. Your output must be precisely tailored to the SPECIFIC ARTIST being analyzed - use whatever descriptors accurately capture that artist, whether or not they appear in the examples above.
+
 EXAMPLES OF BAD OUTPUT:
 Like Billy Joel ❌
 Similar to Adele's style ❌
 Pop music ❌ (too vague)
 Great artist with amazing voice ❌ (not descriptive)
+TOO MUCH DETAILS (more than 12 descriptions) ❌
 
 MAKE SURE IT PERFECTLY REPRESENT THE PROVIDED ARTIST/BAND/COMPOSER WITH NO IRRELEVANT INFO THAT IS NOT PERFECTLY MATCHES THE SPECIFIC DETAILED STYLE.
 
