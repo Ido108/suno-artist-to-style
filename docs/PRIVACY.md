@@ -46,7 +46,7 @@ We will update this policy if our data practices change. The "Last Updated" date
 ## Contact
 
 For questions about this privacy policy, please contact us at:
-- GitHub: https://github.com/[your-github-username]/suno-extension
+- Mail: joaoeusebe@gmail.com
 
 ## Your Consent
 
