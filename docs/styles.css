@@ -4,6 +4,16 @@
     box-sizing: border-box;
 }
 
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+html {
+    overflow-x: hidden;
+    width: 100%;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background: #000000;
@@ -11,6 +21,8 @@ body {
     line-height: 1.6;
     overflow-x: hidden;
     position: relative;
+    width: 100%;
+    max-width: 100vw;
 }
 
 /* Animated Gradient Background */
@@ -794,9 +806,59 @@ footer {
 .feature-item-compact:nth-child(5) { animation-delay: 0.4s; }
 .feature-item-compact:nth-child(6) { animation-delay: 0.5s; }
 
-/* Responsive */
+/* Mobile responsive styles */
 @media (max-width: 1200px) {
-    .hero-grid,
+    .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .hero-visual {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
+        padding: 0 !important;
+    }
+
+    .prompt-box {
+        max-width: calc(100vw - 40px) !important;
+        width: calc(100vw - 40px) !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
+    }
+
+    .prompt-input-container {
+        min-height: 80px !important;
+        max-height: 80px !important;
+        height: 80px !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    #prompt-text {
+        display: -webkit-box !important;
+        -webkit-line-clamp: 3 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        line-height: 1.4 !important;
+        max-height: 100% !important;
+    }
+
+    .cursor {
+        display: none !important;
+    }
+
+    .hero-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
     .demo-grid {
         grid-template-columns: 1fr;
         gap: 40px;
@@ -806,85 +868,70 @@ footer {
         order: initial;
     }
 
-    .feature-grid,
     .steps {
         grid-template-columns: 1fr;
     }
 
     .stats-content {
         grid-template-columns: repeat(2, 1fr);
-        gap: 30px;
     }
 
-    .hero-content h1 {
-        font-size: 3em;
-    }
-
-    header {
-        padding: 12px 20px;
+    .feature-grid-compact {
+        grid-template-columns: 1fr;
     }
 
     .hero,
-    .features,
-    .how-it-works,
     .demo-section,
-    .final-cta {
+    .how-it-works,
+    .final-cta,
+    .features-compact {
         padding-left: 20px;
         padding-right: 20px;
     }
 
-    .header-cta {
-        display: none;
+    .hero-content h1 {
+        font-size: 2.5em;
+    }
+
+    .hero-content h2 {
+        font-size: 1.5em;
     }
 
     .cta-buttons {
-        flex-direction: column;
+        flex-direction: row;
+        gap: 10px;
+        justify-content: center;
     }
 
     .btn-primary,
     .btn-secondary {
-        width: 100%;
+        flex: 1;
+        text-align: center;
         justify-content: center;
+        padding: 14px 20px;
+        font-size: 0.9em;
     }
 
-    .section-header h2 {
-        font-size: 2.4em;
+    .btn-primary img,
+    .btn-secondary img {
+        width: 22px;
+        height: 22px;
     }
 
-    .demo-text h3 {
-        font-size: 2em;
-    }
-
-    .feature-grid-compact {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 24px;
-    }
-
-    .features-compact {
-        padding: 60px 20px;
+    .hero-arrow {
+        display: none;
     }
 
     .section-header-compact h2 {
-        font-size: 2.5em;
+        font-size: 2em;
     }
 
     .section-header-compact p {
-        font-size: 1.1em;
-    }
-
-    .feature-item-compact {
-        padding: 32px 24px;
-    }
-}
-
-@media (max-width: 768px) {
-    .feature-grid-compact {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
+        font-size: 1em;
     }
 
     .feature-icon-compact {
-        font-size: 2.8em;
+        font-size: 2.5em;
     }
 
     .feature-item-compact h3 {
@@ -894,16 +941,71 @@ footer {
     .feature-item-compact p {
         font-size: 0.9em;
     }
-}
 
-@media (max-width: 480px) {
-    .feature-grid-compact {
-        grid-template-columns: 1fr;
-        gap: 20px;
+    .feature-item-compact {
+        padding: 30px 20px;
     }
 
-    .section-header-compact h2 {
-        font-size: 2em;
+    .features-compact {
+        display: none !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .hero-content h2 {
+        font-size: 1.1em;
+        line-height: 1.3;
+    }
+
+    .hero-content h1 {
+        font-size: 1.8em;
+        line-height: 1.1;
+    }
+
+    .hero-content .subtitle {
+        font-size: 0.85em;
+        line-height: 1.5;
+    }
+
+    .hero {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .hero-content {
+        padding: 0;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        padding: 12px 14px;
+        font-size: 0.8em;
+    }
+
+    .btn-primary img,
+    .btn-secondary img {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+@media (max-width: 400px) {
+    .hero-content h2 {
+        font-size: 0.95em;
+    }
+
+    .hero-content h1 {
+        font-size: 1.5em;
+    }
+
+    .hero-content .subtitle {
+        font-size: 0.75em;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        padding: 10px 10px;
+        font-size: 0.75em;
     }
 }
 
@@ -940,7 +1042,7 @@ footer {
 
 .prompt-box {
     width: 100%;
-    max-width: 500px;
+    max-width: 650px;
     background: #18161D;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
@@ -966,7 +1068,7 @@ footer {
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     padding: 1rem 1.2rem;
-    font-size: 1.05rem;
+    font-size: 1.15rem;
     color: #EAEAEA;
     min-height: 80px;
     line-height: 1.6;
