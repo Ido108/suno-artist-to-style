@@ -866,6 +866,11 @@
                     <div class="filters">
                         <button class="btn btn-primary" onclick="sortArtists('name')">🔤 Name</button>
                         <button class="btn btn-success" onclick="sortArtists('recent')">🕐 Recent</button>
+                        <select id="typeFilter" onchange="filterByType()" style="margin-left: 8px;">
+                            <option value="">All (Artists + Songs)</option>
+                            <option value="artist">🎤 Artists Only</option>
+                            <option value="song">🎵 Songs Only</option>
+                        </select>
                         <select id="genreFilter" onchange="filterByGenre()">
                             <option value="">All Genres</option>
                         </select>
@@ -1057,6 +1062,7 @@
         let lastClickedIndex = null; // For shift-click selection
         let currentSort = 'name'; // Default sort
         let currentGenreFilter = ''; // Current genre filter
+        let currentTypeFilter = ''; // Current type filter (empty = all, 'artist' = artists only, 'song' = songs only)
         let currentSearchTerm = ''; // Track current search term
 
         // Sidebar toggle function
@@ -1392,7 +1398,8 @@
                     entry.style.toLowerCase().includes(currentSearchTerm);
                 const genre = getGenreFromStyle(entry.style);
                 const matchesGenre = !currentGenreFilter || genre === currentGenreFilter;
-                return matchesSearch && matchesGenre;
+                const matchesType = !currentTypeFilter || entry.type === currentTypeFilter;
+                return matchesSearch && matchesGenre && matchesType;
             });
 
             // Sort based on current sort mode
@@ -1533,6 +1540,12 @@
         function filterByGenre() {
             const genreFilter = document.getElementById('genreFilter');
             currentGenreFilter = genreFilter.value;
+            displayArtists();
+        }
+
+        function filterByType() {
+            const typeFilter = document.getElementById('typeFilter');
+            currentTypeFilter = typeFilter.value;
             displayArtists();
         }
 
