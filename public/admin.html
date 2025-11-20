@@ -754,6 +754,104 @@
             padding: 6px 8px;
             font-size: 13px;
         }
+
+        /* TAB SWITCHER */
+        .tab-switcher {
+            display: flex;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .tab-button {
+            border: 1px solid #dee2e6;
+            background: white;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+            box-shadow: 0 3px 12px rgba(102, 126, 234, 0.35);
+        }
+
+        /* FEEDBACK TAB */
+        .feedback-toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .feedback-summary {
+            padding: 12px 20px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #dee2e6;
+            background: white;
+        }
+
+        .feedback-chip {
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 0.9em;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chip-pending { background: #fff3cd; color: #856404; }
+        .chip-approved { background: #d4edda; color: #155724; }
+        .chip-ignored { background: #f8d7da; color: #721c24; }
+
+        .feedback-table {
+            width: 100%;
+            border-spacing: 0;
+            border-collapse: collapse;
+        }
+
+        .feedback-table th, .feedback-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: top;
+            text-align: right;
+        }
+
+        .feedback-table th {
+            background: #f8f9fa;
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge-pending { background: #fff3cd; color: #856404; }
+        .badge-approved { background: #d4edda; color: #155724; }
+        .badge-ignored { background: #f8d7da; color: #721c24; }
+
+        .feedback-empty {
+            text-align: center;
+            padding: 40px 0;
+            color: #6c757d;
+            background: white;
+        }
     </style>
 </head>
 <body>
@@ -799,6 +897,13 @@
         <div class="main-layout">
             <!-- Main Area -->
             <div class="main-area">
+                <!-- Tab Switcher -->
+                <div class="tab-switcher">
+                    <button id="artistsTabBtn" class="tab-button active" onclick="switchTab('artists')">ניהול אמנים ושירים</button>
+                    <button id="feedbackTabBtn" class="tab-button" onclick="switchTab('feedback')">פידבקים של משתמשים</button>
+                </div>
+
+                <div id="artistsSection">
                 <!-- Compact Stats Bar -->
                 <div class="stats">
                     <div class="stat-card">
@@ -888,6 +993,48 @@
                 <!-- Artists List - THE STAR -->
                 <div class="artists-list" id="artistsList">
                     <!-- Artist cards will be added here dynamically -->
+                </div>
+                </div>
+
+                <div id="feedbackSection" class="hidden" style="flex: 1; display: flex; flex-direction: column;">
+                    <div id="feedbackAlertContainer"></div>
+                    <div class="feedback-toolbar">
+                        <label for="feedbackStatusFilter" style="font-weight: 600;">סטטוס:</label>
+                        <select id="feedbackStatusFilter" onchange="loadFeedback()">
+                            <option value="">הכל</option>
+                            <option value="pending">ממתין</option>
+                            <option value="approved">אושר</option>
+                            <option value="ignored">התעלם</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="loadFeedback()">רענן</button>
+                        <div style="flex: 1"></div>
+                        <button class="btn btn-success" onclick="bulkFeedback('approve')">Approve All</button>
+                        <button class="btn btn-danger" onclick="bulkFeedback('ignore')">Ignore All</button>
+                    </div>
+
+                    <div class="feedback-summary">
+                        <div class="feedback-chip chip-pending">Pending: <span id="feedbackPendingCount">0</span></div>
+                        <div class="feedback-chip chip-approved">Approved: <span id="feedbackApprovedCount">0</span></div>
+                        <div class="feedback-chip chip-ignored">Ignored: <span id="feedbackIgnoredCount">0</span></div>
+                        <div class="feedback-chip" style="background:#e7f3ff;color:#004085;">Total: <span id="feedbackTotalCount">0</span></div>
+                    </div>
+
+                    <div style="flex: 1; overflow: auto; background: white;">
+                        <table class="feedback-table">
+                            <thead>
+                                <tr>
+                                    <th>אמן</th>
+                                    <th>פרומפט מקורי</th>
+                                    <th>פרומפט מוצע</th>
+                                    <th>סטטוס</th>
+                                    <th>פעולות</th>
+                                </tr>
+                            </thead>
+                            <tbody id="feedbackTableBody">
+                            </tbody>
+                        </table>
+                        <div id="feedbackEmptyState" class="feedback-empty hidden">אין פידבקים עדיין.</div>
+                    </div>
                 </div>
             </div>
 
@@ -1064,6 +1211,8 @@
         let currentGenreFilter = ''; // Current genre filter
         let currentTypeFilter = ''; // Current type filter (empty = all, 'artist' = artists only, 'song' = songs only)
         let currentSearchTerm = ''; // Track current search term
+        let feedbackItems = []; // User feedback queue
+        let currentTab = 'artists';
 
         // Sidebar toggle function
         function toggleSidebar() {
@@ -1075,6 +1224,45 @@
             } else {
                 toggleText.textContent = '⚙️ Settings';
             }
+        }
+
+        function switchTab(tab) {
+            if (currentTab === tab) {
+                return;
+            }
+
+            currentTab = tab;
+
+            const artistsSection = document.getElementById('artistsSection');
+            const feedbackSection = document.getElementById('feedbackSection');
+            const artistsBtn = document.getElementById('artistsTabBtn');
+            const feedbackBtn = document.getElementById('feedbackTabBtn');
+
+            if (artistsSection && feedbackSection) {
+                artistsSection.classList.toggle('hidden', tab !== 'artists');
+                feedbackSection.classList.toggle('hidden', tab !== 'feedback');
+            }
+
+            if (artistsBtn && feedbackBtn) {
+                artistsBtn.classList.toggle('active', tab === 'artists');
+                feedbackBtn.classList.toggle('active', tab === 'feedback');
+            }
+
+            if (tab === 'feedback') {
+                loadFeedback();
+            }
+        }
+
+        function showFeedbackAlert(message, type = 'success') {
+            const container = document.getElementById('feedbackAlertContainer');
+            if (!container) return;
+
+            const alertClass = type === 'error' ? 'alert-error' : 'alert-success';
+            container.innerHTML = `<div class=\"alert ${alertClass}\">${message}</div>`;
+
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
         }
 
         // Login function
@@ -2682,6 +2870,186 @@
             } finally {
                 saveBtn.textContent = originalText;
                 saveBtn.disabled = false;
+            }
+        }
+
+        // Feedback helpers are kept near the bottom to avoid cluttering artist logic
+        async function loadFeedback() {
+            if (!sessionPassword) {
+                showFeedbackAlert('חסרה סיסמה - התחבר מחדש', 'error');
+                return;
+            }
+
+            const statusFilterEl = document.getElementById('feedbackStatusFilter');
+            if (!statusFilterEl) return;
+
+            const statusFilter = statusFilterEl.value;
+            const query = statusFilter ? `?status=${encodeURIComponent(statusFilter)}` : '';
+
+            try {
+                const response = await fetch(`${API_URL}/api/feedback${query}`, {
+                    headers: {
+                        'x-admin-password': sessionPassword
+                    }
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to load feedback');
+                }
+
+                feedbackItems = result.items || [];
+                renderFeedbackTable(feedbackItems);
+            } catch (error) {
+                showFeedbackAlert('Failed to load feedback: ' + error.message, 'error');
+            }
+        }
+
+        function updateFeedbackCounts(items) {
+            const pending = items.filter(i => i.status === 'pending').length;
+            const approved = items.filter(i => i.status === 'approved').length;
+            const ignored = items.filter(i => i.status === 'ignored').length;
+
+            const pendingEl = document.getElementById('feedbackPendingCount');
+            const approvedEl = document.getElementById('feedbackApprovedCount');
+            const ignoredEl = document.getElementById('feedbackIgnoredCount');
+            const totalEl = document.getElementById('feedbackTotalCount');
+
+            if (pendingEl) pendingEl.textContent = pending;
+            if (approvedEl) approvedEl.textContent = approved;
+            if (ignoredEl) ignoredEl.textContent = ignored;
+            if (totalEl) totalEl.textContent = items.length || 0;
+        }
+
+        function renderFeedbackTable(items) {
+            const tbody = document.getElementById('feedbackTableBody');
+            const emptyState = document.getElementById('feedbackEmptyState');
+
+            if (!tbody || !emptyState) return;
+
+            if (!items || items.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                updateFeedbackCounts([]);
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            const rows = items.map(item => {
+                const badgeClass = item.status === 'approved'
+                    ? 'badge-approved'
+                    : item.status === 'ignored'
+                        ? 'badge-ignored'
+                        : 'badge-pending';
+
+                return `
+                    <tr>
+                        <td>${escapeHtml(item.artist || '')}</td>
+                        <td>${escapeHtml(item.originalPrompt || '')}</td>
+                        <td>${escapeHtml(item.suggestedPrompt || '')}</td>
+                        <td><span class="status-badge ${badgeClass}">${item.status || ''}</span></td>
+                        <td style="white-space: nowrap; display: flex; gap: 6px;">
+                            <button class="btn btn-success" style="padding:4px 8px;" onclick="approveFeedback('${item.id}')">Approve</button>
+                            <button class="btn btn-danger" style="padding:4px 8px;" onclick="ignoreFeedback('${item.id}')">Ignore</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            tbody.innerHTML = rows;
+            updateFeedbackCounts(items);
+        }
+
+        async function approveFeedback(id) {
+            if (!id) return;
+
+            try {
+                const response = await fetch(`${API_URL}/api/feedback/${id}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-password': sessionPassword
+                    },
+                    body: JSON.stringify({ password: sessionPassword })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to approve');
+                }
+
+                showFeedbackAlert('הפידבק אושר והפרומפט עודכן', 'success');
+                loadFeedback();
+                loadArtists();
+            } catch (error) {
+                showFeedbackAlert('Approval failed: ' + error.message, 'error');
+            }
+        }
+
+        async function ignoreFeedback(id) {
+            if (!id) return;
+
+            try {
+                const response = await fetch(`${API_URL}/api/feedback/${id}/ignore`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-password': sessionPassword
+                    },
+                    body: JSON.stringify({ password: sessionPassword })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to ignore');
+                }
+
+                showFeedbackAlert('הפידבק סומן כהתעלמות', 'success');
+                loadFeedback();
+            } catch (error) {
+                showFeedbackAlert('Ignore failed: ' + error.message, 'error');
+            }
+        }
+
+        async function bulkFeedback(action) {
+            if (!['approve', 'ignore'].includes(action)) {
+                return;
+            }
+
+            const statusFilterEl = document.getElementById('feedbackStatusFilter');
+            const statusFilter = statusFilterEl ? statusFilterEl.value || 'pending' : 'pending';
+
+            try {
+                const response = await fetch(`${API_URL}/api/feedback/bulk`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-password': sessionPassword
+                    },
+                    body: JSON.stringify({
+                        action,
+                        status: statusFilter || 'pending',
+                        password: sessionPassword
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to update feedback');
+                }
+
+                showFeedbackAlert(`עודכנו ${result.updated || 0} פריטים`, 'success');
+                loadFeedback();
+                if (action === 'approve') {
+                    loadArtists();
+                }
+            } catch (error) {
+                showFeedbackAlert('Bulk action failed: ' + error.message, 'error');
             }
         }
 

@@ -48,6 +48,10 @@ const SONG_PROMPT_FILE = path.join(VOLUME_PATH, 'song_prompt.txt');
 const FALLBACK_ARTIST_PROMPT = path.join(__dirname, '../artist_prompt.txt');
 const FALLBACK_SONG_PROMPT = path.join(__dirname, '../song_prompt.txt');
 
+// Feedback storage (user prompt fixes)
+const FEEDBACK_FILE = path.join(VOLUME_PATH, 'feedback.json');
+const FALLBACK_FEEDBACK_FILE = path.join(__dirname, '../feedback.json');
+
 // Initialize: Copy from fallback if volume file doesn't exist
 if (process.env.RAILWAY_VOLUME_MOUNT_PATH && !fsSync.existsSync(ARTISTS_FILE)) {
   console.log('Initializing artist_styles.json in Railway volume...');
@@ -70,6 +74,16 @@ if (process.env.RAILWAY_VOLUME_MOUNT_PATH) {
   if (!fsSync.existsSync(SONG_PROMPT_FILE) && fsSync.existsSync(FALLBACK_SONG_PROMPT)) {
     fsSync.copyFileSync(FALLBACK_SONG_PROMPT, SONG_PROMPT_FILE);
     console.log('Copied song_prompt.txt to volume');
+  }
+
+  // Initialize feedback file in volume (if fallback exists)
+  if (!fsSync.existsSync(FEEDBACK_FILE) && fsSync.existsSync(FALLBACK_FEEDBACK_FILE)) {
+    try {
+      fsSync.copyFileSync(FALLBACK_FEEDBACK_FILE, FEEDBACK_FILE);
+      console.log('Copied feedback.json to volume');
+    } catch (err) {
+      console.error('Error copying feedback file:', err.message);
+    }
   }
 }
 
@@ -171,6 +185,47 @@ async function writePrompt(type, content) {
     console.error(`Error writing ${type} prompt file:`, error.message);
     return false;
   }
+}
+
+// Feedback helpers
+async function readFeedbacks() {
+  try {
+    if (fsSync.existsSync(FEEDBACK_FILE)) {
+      const data = await fs.readFile(FEEDBACK_FILE, 'utf-8');
+      return JSON.parse(data);
+    }
+
+    if (fsSync.existsSync(FALLBACK_FEEDBACK_FILE)) {
+      const data = await fs.readFile(FALLBACK_FEEDBACK_FILE, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error reading feedback file:', error.message);
+  }
+
+  return { items: [] };
+}
+
+async function writeFeedbacks(data) {
+  try {
+    const payload = data || { items: [] };
+    await fs.writeFile(FEEDBACK_FILE, JSON.stringify(payload, null, 2), 'utf-8');
+    return true;
+  } catch (error) {
+    console.error('Error writing feedback file:', error.message);
+    return false;
+  }
+}
+
+function findArtistKey(targetName, data) {
+  const normalizedTarget = normalizeArtistName(targetName);
+  const entries = Object.keys(data.artists || {});
+  for (const key of entries) {
+    if (normalizeArtistName(key) === normalizedTarget) {
+      return key;
+    }
+  }
+  return null;
 }
 
 // Function to call the Gemini API
@@ -726,6 +781,196 @@ app.post('/api/contribute', async (req, res) => {
   } catch (error) {
     console.error('[Contribute] Error:', error.message);
     res.status(500).json({ error: 'Failed to submit artist' });
+  }
+});
+
+// User feedback endpoints (prompt corrections)
+app.post('/api/feedback', async (req, res) => {
+  try {
+    const { artist, originalPrompt, suggestedPrompt, source = 'extension' } = req.body;
+
+    if (!artist || !suggestedPrompt) {
+      return res.status(400).json({ error: 'Artist name and suggested prompt are required' });
+    }
+
+    const feedbackData = await readFeedbacks();
+    const artistsData = await readArtists();
+
+    const matchedKey = findArtistKey(artist, artistsData);
+    const artistName = matchedKey || artist;
+    const currentPrompt = matchedKey ? artistsData.artists[matchedKey] : '';
+
+    const newFeedback = {
+      id: `fb_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+      artist: artistName,
+      originalPrompt: originalPrompt || currentPrompt || '',
+      suggestedPrompt,
+      status: 'pending',
+      source,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    feedbackData.items = feedbackData.items || [];
+    feedbackData.items.unshift(newFeedback);
+
+    const saved = await writeFeedbacks(feedbackData);
+    if (!saved) {
+      return res.status(500).json({ error: 'Failed to save feedback' });
+    }
+
+    res.json({ success: true, message: 'Feedback received', id: newFeedback.id });
+  } catch (error) {
+    console.error('[Feedback] Error:', error.message);
+    res.status(500).json({ error: 'Failed to submit feedback' });
+  }
+});
+
+app.get('/api/feedback', async (req, res) => {
+  try {
+    const password = req.headers['x-admin-password'] || req.query.password;
+    const statusFilter = req.query.status;
+
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const feedbackData = await readFeedbacks();
+    let items = feedbackData.items || [];
+
+    if (statusFilter) {
+      items = items.filter(item => item.status === statusFilter);
+    }
+
+    const sorted = items.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    res.json({ items: sorted });
+  } catch (error) {
+    console.error('[Feedback] Error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch feedback' });
+  }
+});
+
+app.post('/api/feedback/:id/approve', async (req, res) => {
+  try {
+    const password = req.headers['x-admin-password'] || req.body.password;
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const feedbackId = req.params.id;
+    const feedbackData = await readFeedbacks();
+    const items = feedbackData.items || [];
+    const target = items.find(item => item.id === feedbackId);
+
+    if (!target) {
+      return res.status(404).json({ error: 'Feedback not found' });
+    }
+
+    const artistsData = await readArtists();
+    const artistKey = findArtistKey(target.artist, artistsData) || target.artist;
+
+    if (!artistsData.artists) {
+      artistsData.artists = {};
+    }
+
+    artistsData.artists[artistKey] = target.suggestedPrompt;
+    target.status = 'approved';
+    target.updatedAt = Date.now();
+
+    const savedFeedback = await writeFeedbacks(feedbackData);
+    const savedArtists = await writeArtists(artistsData);
+
+    if (savedFeedback && savedArtists) {
+      return res.json({ success: true, message: 'Feedback approved and prompt updated' });
+    }
+
+    res.status(500).json({ error: 'Failed to save changes' });
+  } catch (error) {
+    console.error('[Feedback] Approve error:', error.message);
+    res.status(500).json({ error: 'Failed to approve feedback' });
+  }
+});
+
+app.post('/api/feedback/:id/ignore', async (req, res) => {
+  try {
+    const password = req.headers['x-admin-password'] || req.body.password;
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const feedbackId = req.params.id;
+    const feedbackData = await readFeedbacks();
+    const target = (feedbackData.items || []).find(item => item.id === feedbackId);
+
+    if (!target) {
+      return res.status(404).json({ error: 'Feedback not found' });
+    }
+
+    target.status = 'ignored';
+    target.updatedAt = Date.now();
+
+    const saved = await writeFeedbacks(feedbackData);
+    if (saved) {
+      return res.json({ success: true, message: 'Feedback ignored' });
+    }
+
+    res.status(500).json({ error: 'Failed to update feedback' });
+  } catch (error) {
+    console.error('[Feedback] Ignore error:', error.message);
+    res.status(500).json({ error: 'Failed to ignore feedback' });
+  }
+});
+
+app.post('/api/feedback/bulk', async (req, res) => {
+  try {
+    const password = req.headers['x-admin-password'] || req.body.password;
+    const { action, status = 'pending' } = req.body;
+
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    if (!['approve', 'ignore'].includes(action)) {
+      return res.status(400).json({ error: 'Action must be approve or ignore' });
+    }
+
+    const feedbackData = await readFeedbacks();
+    const items = feedbackData.items || [];
+    const targets = status ? items.filter(item => item.status === status) : items;
+
+    if (targets.length === 0) {
+      return res.json({ success: true, updated: 0, message: 'No feedback entries to update' });
+    }
+
+    let artistsData = null;
+    if (action === 'approve') {
+      artistsData = await readArtists();
+      if (!artistsData.artists) {
+        artistsData.artists = {};
+      }
+    }
+
+    targets.forEach(item => {
+      item.status = action === 'approve' ? 'approved' : 'ignored';
+      item.updatedAt = Date.now();
+
+      if (action === 'approve') {
+        const artistKey = findArtistKey(item.artist, artistsData) || item.artist;
+        artistsData.artists[artistKey] = item.suggestedPrompt;
+      }
+    });
+
+    const savedFeedback = await writeFeedbacks(feedbackData);
+    const savedArtists = action === 'approve' ? await writeArtists(artistsData) : true;
+
+    if (savedFeedback && savedArtists) {
+      return res.json({ success: true, updated: targets.length, action });
+    }
+
+    res.status(500).json({ error: 'Failed to save changes' });
+  } catch (error) {
+    console.error('[Feedback] Bulk error:', error.message);
+    res.status(500).json({ error: 'Failed to process feedback bulk action' });
   }
 });
 
