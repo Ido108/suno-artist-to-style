@@ -1017,8 +1017,8 @@ footer {
 
 .top-logo img {
     display: block;
-    width: min(360px, 82vw);
-    height: 88px;
+    width: min(190px, 60vw);
+    height: auto;
     object-fit: contain;
     margin: 0 auto;
 }
