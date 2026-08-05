@@ -1016,8 +1016,11 @@ footer {
 }
 
 .top-logo img {
-    width: 100px;
-    height: 100px;
+    display: block;
+    width: min(360px, 82vw);
+    height: 88px;
+    object-fit: contain;
+    margin: 0 auto;
 }
 
 /* Prompt Box Animation Styles (from example) */
