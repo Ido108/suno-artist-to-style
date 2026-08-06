@@ -1,3 +1,13 @@
+<!-- repo-branding:start -->
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-horizontal-light.png">
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/logo-horizontal.png">
+    <img src=".github/assets/logo-horizontal.png" alt="SunoMate" width="720">
+  </picture>
+</p>
+<!-- repo-branding:end -->
+
 # 🎵 Suno Artist Style Replacer
 
 Auto-replace artist names with detailed style descriptions in Suno AI, with full admin panel and AI generator.
